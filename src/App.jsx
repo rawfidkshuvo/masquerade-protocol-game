@@ -1830,6 +1830,18 @@ export default function MasqueradeProtocol() {
             <BookOpen size={16} /> READ_MANUAL.txt
           </button>
         </div>
+        <div className="absolute bottom-4 text-slate-600 text-xs text-center">
+          Developed by <strong>RAWFID K SHUVO</strong>. Visit{" "}
+          <a
+            href="https://rawfidkshuvo.github.io/gamehub/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-cyan-500 underline hover:text-cyan-600"
+          >
+            GAMEHUB
+          </a>{" "}
+          for more games.
+        </div>
       </div>
     );
   }
