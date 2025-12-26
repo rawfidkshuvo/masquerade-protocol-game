@@ -52,12 +52,15 @@ import {
   ScanEye,
   Hammer,
   Sparkles,
+  Radio,
+  Syringe,
+  Award,
+  PlayCircle,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // CONFIGURATION
 // ---------------------------------------------------------------------------
-// Use environment variables for configuration to avoid auth errors
 const firebaseConfig = {
   apiKey: "AIzaSyBjIjK53vVJW1y5RaqEFGSFp0ECVDBEe1o",
   authDomain: "game-hub-ff8aa.firebaseapp.com",
@@ -151,14 +154,14 @@ const DIRECTIVES = {
   ANARCHIST: {
     id: "ANARCHIST",
     name: "The Anarchist",
-    desc: "Win if every living player has at least 1 VIRUS card.",
+    desc: "Win if ALL other living players hold at least 2 INTEL and 1 VIRUS.",
     icon: AlertTriangle,
     color: "text-yellow-400",
   },
   SURVIVOR: {
     id: "SURVIVOR",
     name: "The Survivor",
-    desc: "Win if you are the last player standing.",
+    desc: "Win if you survive 2 System Crashes (Global), or be the last player standing.",
     icon: Shield,
     color: "text-orange-400",
   },
@@ -168,6 +171,20 @@ const DIRECTIVES = {
     desc: "Win if you have 4 VIRUS cards. (Overrides Elimination).",
     icon: Skull,
     color: "text-fuchsia-400",
+  },
+  HACKER: {
+    id: "HACKER",
+    name: "The Hacker",
+    desc: "Win if you use the PING card 4 times.",
+    icon: Radio,
+    color: "text-indigo-400",
+  },
+  ANTIVIRUS: {
+    id: "ANTIVIRUS",
+    name: "Antivirus",
+    desc: "Win if you successfully use a PATCH to remove a VIRUS 3 times.",
+    icon: Syringe,
+    color: "text-teal-400",
   },
 };
 
@@ -552,58 +569,18 @@ const GuideModal = ({ onClose }) => (
             <Crown size={20} className="text-fuchsia-400" /> Objective
           </h3>
           <p className="mb-4">
-            You are a rogue AI. You have a public{" "}
-            <strong className="text-cyan-400">Avatar</strong> and a hidden{" "}
-            <strong className="text-fuchsia-400">Directive</strong>. Complete
-            your Directive to win.
+            You are a rogue AI. Collect{" "}
+            <strong className="text-yellow-400">Golden Chips</strong> by winning
+            rounds. The first player to collect{" "}
+            <strong className="text-yellow-400">3 Chips</strong> becomes the
+            Grand Champion.
           </p>
-        </section>
-
-        <section>
-          <h3 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
-            <User size={20} className="text-cyan-400" /> Public Avatars
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {Object.values(AVATARS).map((avatar) => (
-              <div
-                key={avatar.id}
-                className={`p-3 rounded border bg-slate-800/50 ${avatar.border.replace(
-                  "border-",
-                  "border-l-4 border-l-"
-                )}`}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  {React.createElement(avatar.icon, {
-                    size: 16,
-                    className: avatar.color,
-                  })}
-                  <strong className={`text-sm uppercase ${avatar.color}`}>
-                    {avatar.name}
-                  </strong>
-                </div>
-                <div className="text-xs space-y-1">
-                  <div>
-                    <span className="text-slate-500 font-bold">PASSIVE:</span>{" "}
-                    {avatar.passive}
-                  </div>
-                  <div>
-                    <span className="text-fuchsia-500 font-bold">GLITCH:</span>{" "}
-                    {avatar.glitch}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
         </section>
 
         <section>
           <h3 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
             <Eye size={20} className="text-fuchsia-400" /> Hidden Directives
           </h3>
-          <p className="text-xs text-slate-500 mb-3">
-            Each player has one secret win condition. It is revealed only if
-            they activate their Glitch.
-          </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {Object.values(DIRECTIVES).map((dir) => (
               <div
@@ -626,41 +603,19 @@ const GuideModal = ({ onClose }) => (
         </section>
 
         <section>
-          <h3 className="text-xl font-bold text-white mb-3">Turn Cycle</h3>
-          <ol className="list-decimal pl-5 space-y-2 text-sm text-slate-400">
-            <li>
-              <strong className="text-white">Draw Phase:</strong> Draw 1 Card
-              (Miners draw 2). If deck is empty, discard pile shuffles.
-            </li>
-            <li>
-              <strong className="text-white">Action Phase:</strong> Play 1
-              Action Card (Ping/Patch) OR{" "}
-              <strong className="text-cyan-400">Trade</strong> a resource
-              (Intel/Virus) with another player.
-            </li>
-            <li>
-              <strong className="text-white">End Phase:</strong> Check for Virus
-              Overload (3 Viruses = Crash). Discard down to Hand Limit (Default
-              5, Admin 7).
-            </li>
-          </ol>
-        </section>
-
-        <section>
-          <h3 className="text-xl font-bold text-white mb-3">Actions</h3>
+          <h3 className="text-xl font-bold text-white mb-3">Core Mechanics</h3>
           <ul className="list-disc pl-5 space-y-2 text-sm text-slate-400">
             <li>
-              <strong className="text-yellow-400">PING:</strong> Reveal 1 random
-              card from an opponent's hand.
+              <strong className="text-white">Crash:</strong> 3 Viruses =
+              Immediate Elimination. The turn passes immediately.
             </li>
             <li>
-              <strong className="text-blue-400">PATCH:</strong> Remove 1 Virus
-              from your hand.
+              <strong className="text-white">Survivor:</strong> Wins by
+              surviving 2 system crashes or being the last one alive.
             </li>
             <li>
-              <strong className="text-cyan-400">TRADE (Intel/Virus):</strong>{" "}
-              Select an Intel/Virus card, then click a player. You give them
-              your card, you get a random card from them.
+              <strong className="text-white">Round System:</strong>
+              Winning a round grants 1 Chip. Roles shuffle every round.
             </li>
           </ul>
         </section>
@@ -869,6 +824,49 @@ export default function MasqueradeProtocol() {
     setTimeout(() => setFeedback(null), 2500);
   };
 
+  // --- IMMEDIATE VIRUS CHECK ---
+  // Scans ALL players to see if anyone has 3+ Viruses and eliminates them immediately.
+  // RETURNS: Number of players crashed (to update global crashCount)
+  const processVirusOverload = (players, discardPile, logs) => {
+    let crashCount = 0;
+
+    players.forEach((p) => {
+      if (p.isEliminated) return;
+
+      // FIREWALL is immune.
+      // CORRUPTOR is immune (needs viruses to win).
+      if (p.avatar === "FIREWALL" || p.directive === "CORRUPTOR") return;
+
+      const virusCount = p.hand.filter((c) => c === "VIRUS").length;
+
+      if (virusCount >= 3) {
+        p.isEliminated = true;
+        discardPile.push(...p.hand);
+        p.hand = []; // Wipe hand
+        crashCount++;
+
+        logs.push({
+          text: `SYSTEM CRASH: ${p.name} overloaded by Viruses!`,
+          type: "danger",
+          id: Date.now() + Math.random(),
+          viewerId: "all",
+        });
+
+        // Only trigger visual feedback if it's the current user crashing
+        if (user && p.id === user.uid) {
+          triggerFeedback(
+            "failure",
+            "SYSTEM CRASH",
+            "Eliminated by Virus Overload",
+            Bug
+          );
+        }
+      }
+    });
+
+    return crashCount;
+  };
+
   // --- ACTIONS ---
 
   const createRoom = async () => {
@@ -891,11 +889,16 @@ export default function MasqueradeProtocol() {
           isEliminated: false,
           ready: false,
           passiveUsed: false,
+          pingCount: 0,
+          antivirusCount: 0,
+          chips: 0, // Golden Chips
         },
       ],
       deck: [],
       discardPile: [],
       turnIndex: 0,
+      crashCount: 0,
+      roundCount: 1,
       logs: [],
       winnerId: null,
     };
@@ -953,6 +956,9 @@ export default function MasqueradeProtocol() {
           isEliminated: false,
           ready: false,
           passiveUsed: false,
+          pingCount: 0,
+          antivirusCount: 0,
+          chips: 0,
         },
       ];
       await updateDoc(ref, { players: newPlayers });
@@ -996,6 +1002,9 @@ export default function MasqueradeProtocol() {
         hand,
         ready: false,
         passiveUsed: false,
+        pingCount: 0,
+        antivirusCount: 0,
+        // chips are preserved
       };
     });
 
@@ -1007,9 +1016,10 @@ export default function MasqueradeProtocol() {
         deck,
         discardPile: [],
         turnIndex: 0,
+        crashCount: 0,
         logs: [
           {
-            text: "System Initialized. Masquerade Protocol Active.",
+            text: `Round ${gameState.roundCount || 1} Initialized.`,
             type: "neutral",
             id: Date.now(),
             viewerId: "all",
@@ -1047,7 +1057,8 @@ export default function MasqueradeProtocol() {
     setShowLeaveConfirm(false);
   };
 
-  const returnToLobby = async () => {
+  // FULL RESET (Used only after Grand Champion is crowned)
+  const resetGameSession = async () => {
     if (gameState.hostId !== user.uid) return;
     const players = gameState.players.map((p) => ({
       ...p,
@@ -1059,6 +1070,9 @@ export default function MasqueradeProtocol() {
       isEliminated: false,
       ready: false,
       passiveUsed: false,
+      pingCount: 0,
+      antivirusCount: 0,
+      chips: 0, // Reset Chips
     }));
     await updateDoc(
       doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
@@ -1069,10 +1083,64 @@ export default function MasqueradeProtocol() {
         discardPile: [],
         winnerId: null,
         logs: [],
-        lastEvent: null, // Clear last event
+        lastEvent: null,
+        crashCount: 0,
+        roundCount: 1, // Reset Round
       }
     );
     setShowLeaveConfirm(false);
+  };
+
+  // NEXT ROUND (Preserves chips, increments round)
+  const startNextRound = async () => {
+    if (gameState.hostId !== user.uid) return;
+
+    // 1. Prepare new game state
+    const avatarKeys = shuffle(Object.keys(AVATARS));
+    const directiveKeys = shuffle(Object.keys(DIRECTIVES));
+    const deck = shuffle([...DECK_TEMPLATE]);
+
+    // 2. Map players (Keep IDs, Names, Chips; Reset everything else)
+    const players = gameState.players.map((p, i) => {
+      const hand = [deck.pop(), deck.pop(), deck.pop()];
+      return {
+        ...p,
+        avatar: avatarKeys[i % avatarKeys.length],
+        directive: directiveKeys[i % directiveKeys.length],
+        hand,
+        ready: false,
+        passiveUsed: false,
+        pingCount: 0,
+        antivirusCount: 0,
+        isEliminated: false,
+        revealed: false,
+        glitchUsed: false,
+        // chips are preserved
+      };
+    });
+
+    // 3. Update Firestore
+    await updateDoc(
+      doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
+      {
+        status: "playing", // Go back to playing immediately
+        players,
+        deck,
+        discardPile: [],
+        turnIndex: 0,
+        crashCount: 0,
+        winnerId: null, // Clear winner
+        roundCount: increment(1),
+        logs: [
+          {
+            text: `Round ${gameState.roundCount + 1} Initialized.`,
+            type: "neutral",
+            id: Date.now(),
+            viewerId: "all",
+          },
+        ],
+      }
+    );
   };
 
   const toggleReady = async () => {
@@ -1090,6 +1158,14 @@ export default function MasqueradeProtocol() {
   // --- GAMEPLAY LOGIC ---
 
   const checkWinConditions = async (players, logs) => {
+    const living = players.filter((pl) => !pl.isEliminated);
+
+    // 1. UNIVERSAL CONDITION: Last Man Standing
+    if (living.length === 1) {
+      return living[0].id;
+    }
+
+    // 2. Directive Specific Conditions
     for (const p of players) {
       if (p.isEliminated) continue;
       const directive = p.directive;
@@ -1101,22 +1177,28 @@ export default function MasqueradeProtocol() {
       } else if (directive === "CORRUPTOR") {
         if (hand.filter((c) => c === "VIRUS").length >= 4) won = true;
       } else if (directive === "ANARCHIST") {
-        const living = players.filter((pl) => !pl.isEliminated);
-        if (
-          living.every((pl) => pl.hand.includes("VIRUS")) &&
-          living.length > 1
-        )
-          won = true;
+        // CHANGED: Win if ALL other living players hold >= 2 INTEL and >= 1 VIRUS
+        const others = living.filter((pl) => pl.id !== p.id);
+        const conditionMet = others.every(
+          (pl) =>
+            pl.hand.filter((c) => c === "INTEL").length >= 2 &&
+            pl.hand.includes("VIRUS")
+        );
+        if (others.length > 0 && conditionMet) won = true;
       } else if (directive === "SABOTEUR") {
-        // SABOTEUR NEW WIN CONDITION: 1 of each card type
         const hasIntel = hand.includes("INTEL");
         const hasVirus = hand.includes("VIRUS");
         const hasPing = hand.includes("PING");
         const hasPatch = hand.includes("PATCH");
         if (hasIntel && hasVirus && hasPing && hasPatch) won = true;
       } else if (directive === "SURVIVOR") {
-        const living = players.filter((pl) => !pl.isEliminated);
-        if (living.length === 1 && living[0].id === p.id) won = true;
+        if (gameState.crashCount >= 2) won = true;
+      } else if (directive === "HACKER") {
+        // CHANGED: 4 Pings
+        if ((p.pingCount || 0) >= 4) won = true;
+      } else if (directive === "ANTIVIRUS") {
+        // NEW: 3 Successful Patches
+        if ((p.antivirusCount || 0) >= 3) won = true;
       }
 
       if (won) {
@@ -1135,7 +1217,7 @@ export default function MasqueradeProtocol() {
   ) => {
     // 1. Current Player Hand Limit Check (Discard Phase)
     const currentP = updatedPlayers[gameState.turnIndex];
-    let discardedCards = []; // Track discarded cards
+    let discardedCards = [];
 
     if (!currentP.isEliminated) {
       const limit = currentP.avatar === "ADMIN" ? 7 : 5;
@@ -1153,20 +1235,21 @@ export default function MasqueradeProtocol() {
       }
     }
 
-    // LOCAL MODAL for self (if I discarded)
     if (discardedCards.length > 0) {
       queueAction({
         title: "MEMORY OVERFLOW",
         message: `Hand limit exceeded. Auto-purged data:`,
         cards: discardedCards.map((c) => ({ type: c, label: "Purged" })),
       });
-      // We do NOT modify eventData to show discards to others or the listener.
-      // It's handled locally for the discarding player.
     }
 
-    // 2. IMMEDIATE WIN CHECK (Priority over Death) - CORRUPTOR FIX
+    // 2. IMMEDIATE WIN CHECK (Priority over Death)
     let winnerId = await checkWinConditions(updatedPlayers, logs);
     if (winnerId) {
+      const winnerIdx = updatedPlayers.findIndex((p) => p.id === winnerId);
+      updatedPlayers[winnerIdx].chips =
+        (updatedPlayers[winnerIdx].chips || 0) + 1;
+
       const resetReadyPlayers = updatedPlayers.map((p) => ({
         ...p,
         ready: false,
@@ -1177,7 +1260,7 @@ export default function MasqueradeProtocol() {
         winnerId,
         discardPile,
         logs: arrayUnion(...logs, {
-          text: `Runtime Complete. Winner found.`,
+          text: `Round Winner Identified: ${updatedPlayers[winnerIdx].name}. Chip awarded.`,
           type: "success",
           id: Date.now() + 2,
           viewerId: "all",
@@ -1192,64 +1275,88 @@ export default function MasqueradeProtocol() {
       return;
     }
 
-    // 3. Virus Overload Check
-    if (!currentP.isEliminated && currentP.avatar !== "FIREWALL") {
-      const virusCount = currentP.hand.filter((c) => c === "VIRUS").length;
-      if (virusCount >= 3) {
-        currentP.isEliminated = true;
-        discardPile.push(...currentP.hand);
-        currentP.hand = [];
+    // 4. CHAIN CRASH LOOP
+    // We loop until we find a player who draws cards and SURVIVES
+    // or everyone is dead (game over)
+    let activePlayerFound = false;
+    let nextIdx = (gameState.turnIndex + 1) % updatedPlayers.length;
+    let globalCrashAccumulator = 0;
 
+    // Safety brake to prevent infinite loops
+    let loopCount = 0;
+    const maxLoops = updatedPlayers.length * 2;
+
+    while (!activePlayerFound && loopCount < maxLoops) {
+      loopCount++;
+
+      // A. Skip already eliminated players
+      let innerLoop = 0;
+      while (
+        updatedPlayers[nextIdx].isEliminated &&
+        innerLoop < updatedPlayers.length
+      ) {
+        nextIdx = (nextIdx + 1) % updatedPlayers.length;
+        innerLoop++;
+      }
+
+      const nextP = updatedPlayers[nextIdx];
+      // Reset passive for the potential new player
+      nextP.passiveUsed = false;
+
+      // If everyone is dead, break (Win check will catch it later)
+      if (innerLoop >= updatedPlayers.length) break;
+
+      // B. Draw Phase
+      let drawCount = 1;
+      if (nextP.avatar === "MINER") drawCount = 2;
+
+      for (let i = 0; i < drawCount; i++) {
+        if (deck.length === 0) {
+          if (discardPile.length > 0) {
+            deck = shuffle([...discardPile]);
+            discardPile = [];
+            logs.push({
+              text: "Deck rebooted.",
+              type: "neutral",
+              id: Date.now() + 3 + loopCount,
+              viewerId: "all",
+            });
+          } else {
+            break;
+          }
+        }
+        if (deck.length > 0) nextP.hand.push(deck.pop());
+      }
+
+      // C. Immediate Virus Check
+      const crashedCount = processVirusOverload(
+        updatedPlayers,
+        discardPile,
+        logs
+      );
+      globalCrashAccumulator += crashedCount;
+
+      // D. Did they survive?
+      if (!nextP.isEliminated) {
+        activePlayerFound = true; // Loop ends, this player starts turn
+      } else {
+        // Player crashed immediately. Loop continues to NEXT person.
         logs.push({
-          text: `SYSTEM CRASH: ${currentP.name} overloaded by Viruses!`,
+          text: `${nextP.name} crashed immediately upon receiving data. Passing control...`,
           type: "danger",
-          id: Date.now() + 1,
+          id: Date.now() + 5 + loopCount,
           viewerId: "all",
         });
-        triggerFeedback("failure", "SYSTEM CRASH", "Eliminated by Virus", Bug);
       }
     }
 
-    // 4. Find Next Player
-    let nextIdx = (gameState.turnIndex + 1) % updatedPlayers.length;
-    let loop = 0;
-    while (
-      updatedPlayers[nextIdx].isEliminated &&
-      loop < updatedPlayers.length
-    ) {
-      nextIdx = (nextIdx + 1) % updatedPlayers.length;
-      loop++;
-    }
-    const nextP = updatedPlayers[nextIdx];
-
-    // RESET PASSIVE FOR NEXT PLAYER
-    nextP.passiveUsed = false;
-
-    // 5. Draw Phase (Next Player)
-    let drawCount = 1;
-    if (nextP.avatar === "MINER") drawCount = 2;
-
-    for (let i = 0; i < drawCount; i++) {
-      if (deck.length === 0) {
-        if (discardPile.length > 0) {
-          deck = shuffle([...discardPile]);
-          discardPile = [];
-          logs.push({
-            text: "Deck rebooted (Reshuffled discard pile).",
-            type: "neutral",
-            id: Date.now() + 3,
-            viewerId: "all",
-          });
-        } else {
-          break;
-        }
-      }
-      if (deck.length > 0) nextP.hand.push(deck.pop());
-    }
-
-    // 6. IMMEDIATE WIN CHECK (Next Player after drawing)
+    // 7. IMMEDIATE WIN CHECK (After Drawing/Crashing Chain)
     winnerId = await checkWinConditions(updatedPlayers, logs);
     if (winnerId) {
+      const winnerIdx = updatedPlayers.findIndex((p) => p.id === winnerId);
+      updatedPlayers[winnerIdx].chips =
+        (updatedPlayers[winnerIdx].chips || 0) + 1;
+
       const resetReadyPlayers = updatedPlayers.map((p) => ({
         ...p,
         ready: false,
@@ -1260,11 +1367,12 @@ export default function MasqueradeProtocol() {
         winnerId,
         discardPile,
         logs: arrayUnion(...logs, {
-          text: `Runtime Complete. Winner found.`,
+          text: `Round Winner: ${updatedPlayers[winnerIdx].name}.`,
           type: "success",
           id: Date.now() + 4,
           viewerId: "all",
         }),
+        crashCount: increment(globalCrashAccumulator),
       };
       if (eventData) updates.lastEvent = eventData;
 
@@ -1276,9 +1384,9 @@ export default function MasqueradeProtocol() {
     }
 
     logs.push({
-      text: `Processing cycle: ${nextP.name}`,
+      text: `Processing cycle: ${updatedPlayers[nextIdx].name}`,
       type: "neutral",
-      id: Date.now() + 5,
+      id: Date.now() + 10,
       viewerId: "all",
     });
 
@@ -1286,8 +1394,9 @@ export default function MasqueradeProtocol() {
       players: updatedPlayers,
       deck,
       discardPile,
-      turnIndex: nextIdx,
+      turnIndex: nextIdx, // Ensure turn index is set to the SURVIVOR of the loop
       logs: arrayUnion(...logs),
+      crashCount: increment(globalCrashAccumulator),
     };
     if (eventData) updates.lastEvent = eventData;
 
@@ -1339,7 +1448,6 @@ export default function MasqueradeProtocol() {
     }
 
     await updateDoc(ref, updates);
-    // Modal closing is handled by state derived from gameState in useEffect
   };
 
   const handlePlayCard = async (targetId = null) => {
@@ -1363,6 +1471,10 @@ export default function MasqueradeProtocol() {
       if (virusIdx > -1) {
         players[pIdx].hand.splice(virusIdx, 1);
         discardPile.push("VIRUS");
+
+        // INCREMENT ANTIVIRUS COUNT
+        players[pIdx].antivirusCount = (players[pIdx].antivirusCount || 0) + 1;
+
         logs.push({
           text: `${me.name} ran a Patch. Virus purged.`,
           type: "success",
@@ -1379,6 +1491,10 @@ export default function MasqueradeProtocol() {
       }
     } else if (cardType === "PING") {
       discardPile.push("PING");
+
+      // INCREMENT PING COUNT FOR HACKER
+      players[pIdx].pingCount = (players[pIdx].pingCount || 0) + 1;
+
       if (!targetId) return;
       const target = players.find((p) => p.id === targetId);
       if (target.hand.length > 0) {
@@ -1467,11 +1583,18 @@ export default function MasqueradeProtocol() {
       }
     }
 
+    // --- IMMEDIATE CRASH CHECK (AFTER ACTION) ---
+    // Note: Pings/Patch don't cause crashes, but Trades do.
+    const crashedCount = processVirusOverload(players, discardPile, logs);
+
     setSelectedCardIdx(null);
 
     // CHECK WIN IMMEDIATELY AFTER ACTION
     const winnerId = await checkWinConditions(players, logs);
     if (winnerId) {
+      const winnerIdx = players.findIndex((p) => p.id === winnerId);
+      players[winnerIdx].chips = (players[winnerIdx].chips || 0) + 1;
+
       const resetReadyPlayers = players.map((p) => ({ ...p, ready: false }));
       const updates = {
         players: resetReadyPlayers,
@@ -1479,11 +1602,12 @@ export default function MasqueradeProtocol() {
         winnerId,
         discardPile,
         logs: arrayUnion(...logs, {
-          text: `Runtime Complete. Winner found.`,
+          text: `Round Winner: ${players[winnerIdx].name}.`,
           type: "success",
           id: Date.now(),
           viewerId: "all",
         }),
+        crashCount: increment(crashedCount),
       };
       if (eventData) updates.lastEvent = eventData;
 
@@ -1492,6 +1616,14 @@ export default function MasqueradeProtocol() {
         updates
       );
       return;
+    }
+
+    // If crashes happened, we need to update the global count before proceeding
+    if (crashedCount > 0) {
+      await updateDoc(
+        doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
+        { crashCount: increment(crashedCount) }
+      );
     }
 
     await nextTurn(players, deck, discardPile, logs, eventData);
@@ -1690,9 +1822,15 @@ export default function MasqueradeProtocol() {
 
     setGlitchConfirm(false);
 
+    // --- IMMEDIATE CRASH CHECK (AFTER GLITCH) ---
+    const crashedCount = processVirusOverload(players, discardPile, logs);
+
     // CHECK WIN IMMEDIATELY AFTER GLITCH
     const winnerId = await checkWinConditions(players, logs);
     if (winnerId) {
+      const winnerIdx = players.findIndex((p) => p.id === winnerId);
+      players[winnerIdx].chips = (players[winnerIdx].chips || 0) + 1;
+
       const resetReadyPlayers = players.map((p) => ({ ...p, ready: false }));
       const updates = {
         players: resetReadyPlayers,
@@ -1700,11 +1838,12 @@ export default function MasqueradeProtocol() {
         winnerId,
         discardPile,
         logs: arrayUnion(...logs, {
-          text: `Runtime Complete. Winner found.`,
+          text: `Round Winner: ${players[winnerIdx].name}.`,
           type: "success",
           id: Date.now(),
           viewerId: "all",
         }),
+        crashCount: increment(crashedCount),
       };
       if (eventData) updates.lastEvent = eventData;
 
@@ -1713,6 +1852,14 @@ export default function MasqueradeProtocol() {
         updates
       );
       return;
+    }
+
+    // Update global crash count if necessary
+    if (crashedCount > 0) {
+      await updateDoc(
+        doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
+        { crashCount: increment(crashedCount) }
+      );
     }
 
     await nextTurn(players, deck, discardPile, logs, eventData);
@@ -1728,7 +1875,7 @@ export default function MasqueradeProtocol() {
           />
           <h1 className="text-3xl font-bold mb-2">Under Maintenance</h1>
           <p className="text-gray-400">
-            The AI is glitched. Wait for replaceet hardware.
+            The AI is glitched. Wait for replacement hardware.
           </p>
         </div>
         {/* Add Spacing Between Boxes */}
@@ -1870,6 +2017,15 @@ export default function MasqueradeProtocol() {
                     )}
                   </span>
                   <div className="flex items-center gap-2">
+                    {/* CHIP DISPLAY */}
+                    {(p.chips || 0) > 0 && (
+                      <div className="flex items-center gap-1 bg-yellow-900/40 px-2 py-0.5 rounded border border-yellow-700/50">
+                        <Award size={12} className="text-yellow-400" />
+                        <span className="text-xs text-yellow-200 font-bold">
+                          {p.chips}
+                        </span>
+                      </div>
+                    )}
                     <span className="text-green-500 text-xs flex items-center gap-1">
                       <CheckCircle size={12} /> ONLINE
                     </span>
@@ -1936,6 +2092,9 @@ export default function MasqueradeProtocol() {
       .filter((p) => p.id !== gameState.hostId)
       .every((p) => p.ready);
 
+    const winner = gameState.players.find((p) => p.id === gameState.winnerId);
+    const gameWinner = gameState.players.find((p) => (p.chips || 0) >= 3);
+
     return (
       <div className="min-h-screen bg-slate-950 text-cyan-100 overflow-hidden flex flex-col relative font-mono">
         <FloatingBackground />
@@ -1989,7 +2148,7 @@ export default function MasqueradeProtocol() {
           <div className="flex items-center gap-2">
             <Cpu size={18} className="text-cyan-500" />
             <span className="font-bold tracking-wider hidden md:block text-cyan-100">
-              MASQUERADE://{gameState.roomId}
+              ROUND {gameState.roundCount || 1}
             </span>
             <span className="text-xs text-slate-500">
               Deck: {gameState.deck.length} | Bin:{" "}
@@ -2064,6 +2223,21 @@ export default function MasqueradeProtocol() {
                       {p.name}
                     </span>
                     <div className="flex items-center gap-1">
+                      {/* Chips Indicator */}
+                      {(p.chips || 0) > 0 && (
+                        <div
+                          className="flex items-center gap-0.5"
+                          title={`${p.chips} Chips`}
+                        >
+                          {[...Array(p.chips)].map((_, i) => (
+                            <Award
+                              key={i}
+                              size={10}
+                              className="text-yellow-400 fill-yellow-900"
+                            />
+                          ))}
+                        </div>
+                      )}
                       {p.ready && gameState.status === "finished" && (
                         <CheckCircle size={14} className="text-green-500" />
                       )}
@@ -2132,54 +2306,88 @@ export default function MasqueradeProtocol() {
           {/* CENTER INFO */}
           <div className="flex-1 flex flex-col justify-center items-center text-center">
             {gameState.status === "finished" ? (
-              <div className="bg-slate-900/95 p-8 rounded-xl border border-cyan-500 shadow-2xl z-50 animate-in fade-in zoom-in">
-                <Crown
-                  size={48}
-                  className="text-yellow-400 mx-auto mb-4 animate-bounce"
-                />
-                <h2 className="text-3xl font-bold text-white mb-2">
-                  SIMULATION ENDED
-                </h2>
-                <div className="text-xl text-cyan-400 mb-6">
-                  VICTOR:{" "}
-                  {
-                    gameState.players.find((p) => p.id === gameState.winnerId)
-                      ?.name
-                  }
-                </div>
+              <div className="bg-slate-900/95 p-8 rounded-xl border border-cyan-500 shadow-2xl z-50 animate-in fade-in zoom-in w-full max-w-md">
+                {gameWinner ? (
+                  <>
+                    <Crown
+                      size={64}
+                      className="text-yellow-400 mx-auto mb-4 animate-bounce"
+                    />
+                    <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600 mb-2">
+                      GRAND CHAMPION
+                    </h2>
+                    <div className="text-2xl text-white mb-6">
+                      {gameWinner.name}
+                    </div>
+                    <div className="text-sm text-yellow-500/80 mb-6 uppercase tracking-widest">
+                      Collected 3 Golden Chips
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Award
+                      size={48}
+                      className="text-cyan-400 mx-auto mb-4 animate-bounce"
+                    />
+                    <h2 className="text-3xl font-bold text-white mb-2">
+                      ROUND {gameState.roundCount} COMPLETE
+                    </h2>
+                    <div className="text-xl text-cyan-400 mb-6">
+                      WINNER: {winner?.name}
+                    </div>
+                    <div className="text-sm text-slate-400 mb-6">
+                      {winner?.name} receives a Golden Chip. ({winner?.chips}
+                      /3)
+                    </div>
+                  </>
+                )}
 
                 {isHost ? (
                   <div className="space-y-2">
-                    <button
-                      onClick={returnToLobby}
-                      disabled={!allGuestsReady}
-                      className={`px-6 py-3 rounded font-bold flex items-center gap-2 mx-auto transition-all ${
-                        allGuestsReady
-                          ? "bg-cyan-700 hover:bg-cyan-600 text-white shadow-lg"
-                          : "bg-slate-800 text-slate-500 cursor-not-allowed"
-                      }`}
-                    >
-                      <RotateCcw size={18} /> SYSTEM_RESET
-                    </button>
-                    {!allGuestsReady && (
-                      <div className="text-xs text-yellow-500 animate-pulse">
-                        Waiting for guests to ready up...
-                      </div>
+                    {gameWinner ? (
+                      <button
+                        onClick={resetGameSession}
+                        className="px-6 py-3 rounded font-bold bg-red-700 hover:bg-red-600 text-white shadow-lg mx-auto flex items-center gap-2"
+                      >
+                        <LogOut size={18} /> FULL RESET TO LOBBY
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={startNextRound}
+                          disabled={!allGuestsReady}
+                          className={`px-6 py-3 rounded font-bold flex items-center gap-2 mx-auto transition-all ${
+                            allGuestsReady
+                              ? "bg-cyan-700 hover:bg-cyan-600 text-white shadow-lg"
+                              : "bg-slate-800 text-slate-500 cursor-not-allowed"
+                          }`}
+                        >
+                          <PlayCircle size={18} /> START ROUND{" "}
+                          {(gameState.roundCount || 0) + 1}
+                        </button>
+                        {!allGuestsReady && (
+                          <div className="text-xs text-yellow-500 animate-pulse">
+                            Waiting for players...
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 ) : (
-                  <button
-                    onClick={toggleReady}
-                    disabled={me.ready}
-                    className={`px-6 py-3 rounded font-bold flex items-center gap-2 mx-auto transition-all ${
-                      me.ready
-                        ? "bg-green-800 text-green-200 cursor-default"
-                        : "bg-cyan-700 hover:bg-cyan-600 text-white shadow-lg animate-pulse"
-                    }`}
-                  >
-                    {me.ready ? <CheckCircle size={18} /> : <Zap size={18} />}
-                    {me.ready ? "WAITING FOR HOST" : "READY FOR REBOOT"}
-                  </button>
+                  !gameWinner && (
+                    <button
+                      onClick={toggleReady}
+                      disabled={me.ready}
+                      className={`px-6 py-3 rounded font-bold flex items-center gap-2 mx-auto transition-all ${
+                        me.ready
+                          ? "bg-green-800 text-green-200 cursor-default"
+                          : "bg-cyan-700 hover:bg-cyan-600 text-white shadow-lg animate-pulse"
+                      }`}
+                    >
+                      {me.ready ? <CheckCircle size={18} /> : <Zap size={18} />}
+                      {me.ready ? "WAITING FOR HOST" : "READY FOR NEXT ROUND"}
+                    </button>
+                  )
                 )}
               </div>
             ) : (
@@ -2195,10 +2403,10 @@ export default function MasqueradeProtocol() {
                       key={l.id}
                       className={`text-xs p-2 rounded bg-black/60 border border-slate-800 ${
                         l.type === "danger"
-                          ? "text-red-400 border-red-900"
+                          ? "border-red-500 bg-red-900/10 text-red-300"
                           : l.type === "glitch"
-                          ? "text-fuchsia-300 border-fuchsia-900"
-                          : "text-slate-400"
+                          ? "border-fuchsia-500 bg-fuchsia-900/10 text-fuchsia-300"
+                          : "border-slate-600 text-slate-400"
                       }`}
                       style={{ opacity: 1 - i * 0.3 }}
                     >
@@ -2277,6 +2485,19 @@ export default function MasqueradeProtocol() {
                     </div>
                   </div>
                 </div>
+
+                {/* Chips */}
+                {(me.chips || 0) > 0 && (
+                  <div className="flex items-center gap-1 bg-yellow-900/30 px-3 py-1 rounded border border-yellow-600/50">
+                    {[...Array(me.chips)].map((_, i) => (
+                      <Award
+                        key={i}
+                        size={16}
+                        className="text-yellow-400 fill-yellow-900"
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
 
               {isMyTurn && (
@@ -2442,7 +2663,7 @@ export default function MasqueradeProtocol() {
                 </button>
                 {isHost && (
                   <button
-                    onClick={returnToLobby}
+                    onClick={resetGameSession}
                     className="bg-orange-600 px-4 py-2 rounded text-white flex items-center gap-1"
                   >
                     <Home size={16} /> Lobby
