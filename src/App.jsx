@@ -722,19 +722,6 @@ export default function MasqueradeProtocol() {
     return () => unsub();
   }, []);
 
-  // --- NAVIGATION GUARD ---
-  useEffect(() => {
-    const handleBeforeUnload = (e) => {
-      if (roomId) {
-        e.preventDefault();
-        e.returnValue = "";
-        return "";
-      }
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [roomId]);
-
   // Helper to add action to queue
   const queueAction = (data) => {
     setActionQueue((prev) => [...prev, data]);
@@ -1766,10 +1753,7 @@ export default function MasqueradeProtocol() {
 
   if (view === "menu") {
     return (
-      <div
-        style={{ overscrollBehavior: "none" }}
-        className="min-h-screen bg-slate-950 text-cyan-100 flex flex-col items-center justify-center p-4 relative overflow-hidden font-mono"
-      >
+      <div className="min-h-screen bg-slate-950 text-cyan-100 flex flex-col items-center justify-center p-4 relative overflow-hidden font-mono">
         <FloatingBackground />
         {showGuide && <GuideModal onClose={() => setShowGuide(false)} />}
 
@@ -1849,10 +1833,7 @@ export default function MasqueradeProtocol() {
   if (view === "lobby" && gameState) {
     const isHost = gameState.hostId === user.uid;
     return (
-      <div
-        style={{ overscrollBehavior: "none" }}
-        className="min-h-screen bg-slate-950 text-cyan-100 flex flex-col items-center justify-center p-6 relative font-mono"
-      >
+      <div className="min-h-screen bg-slate-950 text-cyan-100 flex flex-col items-center justify-center p-6 relative font-mono">
         <FloatingBackground />
         <div className="z-10 w-full max-w-lg bg-slate-900/90 backdrop-blur p-8 rounded-lg border border-cyan-500/30 shadow-2xl">
           <div className="flex justify-between items-center mb-8 border-b border-slate-800 pb-4">
@@ -1956,10 +1937,7 @@ export default function MasqueradeProtocol() {
       .every((p) => p.ready);
 
     return (
-      <div
-        style={{ overscrollBehavior: "none" }}
-        className="min-h-screen bg-slate-950 text-cyan-100 overflow-hidden flex flex-col relative font-mono"
-      >
+      <div className="min-h-screen bg-slate-950 text-cyan-100 overflow-hidden flex flex-col relative font-mono">
         <FloatingBackground />
 
         {/* MODALS */}
