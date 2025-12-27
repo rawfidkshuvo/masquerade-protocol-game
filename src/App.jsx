@@ -56,6 +56,7 @@ import {
   Syringe,
   Award,
   PlayCircle,
+  SkipForward,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -552,6 +553,7 @@ const CardDisplay = ({ type, onClick, disabled, highlight, small, tiny }) => {
 const GuideModal = ({ onClose }) => (
   <div className="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center p-4">
     <div className="bg-slate-900 border border-cyan-500/30 rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col shadow-[0_0_50px_rgba(6,182,212,0.2)] overflow-hidden font-mono">
+      {/* Header */}
       <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-950">
         <h2 className="text-2xl font-bold text-cyan-400 flex items-center gap-2 tracking-wider">
           <BookOpen className="text-cyan-500" /> SYSTEM MANUAL
@@ -563,10 +565,14 @@ const GuideModal = ({ onClose }) => (
           <X />
         </button>
       </div>
+
+      {/* Content */}
       <div className="flex-1 overflow-y-auto p-6 space-y-8 text-slate-300">
+        
+        {/* 1. OBJECTIVE */}
         <section>
-          <h3 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
-            <Crown size={20} className="text-fuchsia-400" /> Objective
+          <h3 className="text-xl font-bold text-white mb-3 flex items-center gap-2 border-b border-slate-700 pb-2">
+            <Crown size={20} className="text-yellow-400" /> Objective
           </h3>
           <p className="mb-4">
             You are a rogue AI. Collect{" "}
@@ -577,15 +583,55 @@ const GuideModal = ({ onClose }) => (
           </p>
         </section>
 
+        {/* 2. AVATARS (Public Roles) */}
         <section>
-          <h3 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
-            <Eye size={20} className="text-fuchsia-400" /> Hidden Directives
+          <h3 className="text-xl font-bold text-white mb-3 flex items-center gap-2 border-b border-slate-700 pb-2">
+            <User size={20} className="text-cyan-400" /> Public Avatars (Roles)
           </h3>
+          <p className="text-xs text-slate-500 mb-4">
+            Every player is assigned a public role visible to everyone. These grant passive bonuses and powerful "Glitch" ultimates.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {Object.values(AVATARS).map((av) => (
+              <div
+                key={av.id}
+                className={`p-3 rounded border border-l-4 bg-slate-800/50 ${av.border} border-l-[${av.color.replace("text-", "")}]`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  {React.createElement(av.icon, {
+                    size: 20,
+                    className: av.color,
+                  })}
+                  <strong className={`uppercase ${av.color}`}>{av.name}</strong>
+                </div>
+                <ul className="text-xs space-y-1">
+                  <li className="flex gap-2">
+                    <span className="text-cyan-500 font-bold min-w-[50px]">PASSIVE:</span>
+                    <span className="text-slate-300">{av.passive}</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-fuchsia-500 font-bold min-w-[50px]">GLITCH:</span>
+                    <span className="text-slate-300">{av.glitch}</span>
+                  </li>
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 3. DIRECTIVES (Hidden Agenda) */}
+        <section>
+          <h3 className="text-xl font-bold text-white mb-3 flex items-center gap-2 border-b border-slate-700 pb-2">
+            <Lock size={20} className="text-fuchsia-400" /> Secret Directives
+          </h3>
+          <p className="text-xs text-slate-500 mb-4">
+            Your true win condition. Hidden from others until you activate your Glitch.
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {Object.values(DIRECTIVES).map((dir) => (
               <div
                 key={dir.id}
-                className="p-3 rounded border border-l-4 border-l-fuchsia-500 border-slate-700 bg-slate-800/50"
+                className="p-3 rounded border border-l-4 border-l-fuchsia-500 border-slate-700 bg-slate-800/50 flex flex-col justify-between"
               >
                 <div className="flex items-center gap-2 mb-1">
                   {React.createElement(dir.icon, {
@@ -602,24 +648,44 @@ const GuideModal = ({ onClose }) => (
           </div>
         </section>
 
+        {/* 4. DATA PACKETS (Cards) */}
         <section>
-          <h3 className="text-xl font-bold text-white mb-3">Core Mechanics</h3>
+          <h3 className="text-xl font-bold text-white mb-3 flex items-center gap-2 border-b border-slate-700 pb-2">
+            <Database size={20} className="text-green-400" /> Data Packets
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {Object.values(PACKETS).map((card) => (
+              <div key={card.id} className="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col items-center text-center">
+                <card.icon size={24} className={`mb-2 ${card.color}`} />
+                <div className={`font-bold text-sm mb-1 ${card.color}`}>{card.name}</div>
+                <div className="text-[10px] bg-slate-900 px-2 py-0.5 rounded text-slate-400 mb-2 uppercase tracking-wider">{card.type}</div>
+                <p className="text-xs text-slate-400">{card.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 5. MECHANICS */}
+        <section>
+          <h3 className="text-xl font-bold text-white mb-3 border-b border-slate-700 pb-2">Core Mechanics</h3>
           <ul className="list-disc pl-5 space-y-2 text-sm text-slate-400">
             <li>
-              <strong className="text-white">Crash:</strong> 3 Viruses =
-              Immediate Elimination. The turn passes immediately.
+              <strong className="text-white">Crash:</strong> Holding 3 Viruses causes Immediate Elimination.
             </li>
             <li>
-              <strong className="text-white">Survivor:</strong> Wins by
-              surviving 2 system crashes or being the last one alive.
+              <strong className="text-white">Glitch:</strong> A one-time ultimate ability. Activating it reveals your Secret Directive to everyone.
             </li>
             <li>
-              <strong className="text-white">Round System:</strong>
-              Winning a round grants 1 Chip. Roles shuffle every round.
+              <strong className="text-white">Trade:</strong> Select an INTEL or VIRUS card, then select a target. You give them your card, and blindly take one random card from their hand.
+            </li>
+            <li>
+              <strong className="text-white">Hand Limit:</strong> 5 Cards (7 for Admin). You must discard or skip turn if full.
             </li>
           </ul>
         </section>
       </div>
+
+      {/* Footer */}
       <div className="p-4 bg-slate-950 border-t border-slate-800">
         <button
           onClick={onClose}
@@ -1629,6 +1695,43 @@ export default function MasqueradeProtocol() {
     await nextTurn(players, deck, discardPile, logs, eventData);
   };
 
+  // --- SKIP TURN LOGIC ---
+  const handleSkipTurn = async () => {
+    if (!roomId || !gameState) return;
+    
+    const pIdx = gameState.players.findIndex((p) => p.id === user.uid);
+    const me = gameState.players[pIdx];
+
+    // 1. Check Hand Limit
+    const limit = me.avatar === "ADMIN" ? 7 : 5;
+    if (me.hand.length > limit) {
+      triggerFeedback(
+        "failure",
+        "MEMORY OVERFLOW",
+        `Cannot skip. Hand limit (${limit}) exceeded.`,
+        AlertTriangle
+      );
+      return;
+    }
+
+    // 2. Prepare Logs
+    const logs = [{
+      text: `${me.name} skipped their turn.`,
+      type: "neutral",
+      id: Date.now(),
+      viewerId: "all",
+    }];
+
+    // 3. Pass turn to next player (reuses existing nextTurn logic)
+    // We pass the current state, nextTurn handles the incrementing and drawing for the next person
+    await nextTurn(
+      gameState.players, 
+      gameState.deck, 
+      gameState.discardPile, 
+      logs
+    );
+  };
+
   const activateGlitch = async (targetId = null) => {
     const pIdx = gameState.players.findIndex((p) => p.id === user.uid);
     const me = gameState.players[pIdx];
@@ -2465,10 +2568,23 @@ export default function MasqueradeProtocol() {
                     setInspectingItem(DIRECTIVES[me.directive]);
                   }}
                   className={`
-                  flex items-center gap-3 p-2 rounded border border-slate-700 bg-slate-800 relative cursor-pointer hover:bg-slate-700
-                  ${me.revealed ? "border-red-500 bg-red-900/20" : ""}
-                `}
+                    flex items-center gap-3 p-2 rounded border border-slate-700 bg-slate-800 relative cursor-pointer hover:bg-slate-700
+                    ${me.revealed ? "border-red-500 bg-red-900/20" : ""}
+                  `}
                 >
+                  {/* --- NEW: PROGRESS COUNTERS --- */}
+                  {me.directive === "HACKER" && (
+                    <div className="absolute -top-2 -right-2 bg-indigo-900 text-indigo-100 text-[10px] px-2 py-0.5 rounded-full border border-indigo-500 font-bold shadow-lg z-10 flex items-center gap-1">
+                      <Wifi size={10} /> {me.pingCount || 0}/4
+                    </div>
+                  )}
+                  {me.directive === "ANTIVIRUS" && (
+                    <div className="absolute -top-2 -right-2 bg-teal-900 text-teal-100 text-[10px] px-2 py-0.5 rounded-full border border-teal-500 font-bold shadow-lg z-10 flex items-center gap-1">
+                      <Syringe size={10} /> {me.antivirusCount || 0}/3
+                    </div>
+                  )}
+                  {/* ----------------------------- */}
+
                   {React.createElement(DIRECTIVES[me.directive].icon, {
                     size: 32,
                     className: me.revealed
@@ -2536,31 +2652,69 @@ export default function MasqueradeProtocol() {
             </div>
 
             {/* Action Bar */}
-            {isMyTurn && selectedCard && (
-              <div className="absolute top-0 left-0 right-0 -mt-16 flex justify-center gap-2">
-                {needsTarget ? (
-                  <div className="bg-yellow-600 text-black px-4 py-2 rounded font-bold animate-bounce shadow-lg border border-yellow-400 flex items-center gap-2">
-                    {isTrade ? (
-                      <ArrowLeftRight size={16} />
-                    ) : (
-                      <Wifi size={16} />
-                    )}
-                    Select Target to {isTrade ? "Trade" : "Ping"}
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => handlePlayCard()}
-                    className="bg-cyan-600 hover:bg-cyan-500 text-white px-6 py-2 rounded shadow-lg font-bold flex items-center gap-2"
-                  >
-                    <Upload size={16} /> Execute {PACKETS[selectedCard].name}
-                  </button>
-                )}
-                <button
-                  onClick={() => setSelectedCardIdx(null)}
-                  className="bg-slate-700 hover:bg-slate-600 p-2 rounded"
-                >
-                  <X size={20} />
-                </button>
+            {/* Action Bar (Updated) */}
+            {isMyTurn && (
+              <div className="absolute top-0 left-0 right-0 -mt-16 flex justify-center gap-2 pointer-events-none">
+                <div className="pointer-events-auto flex gap-2">
+                  {selectedCard ? (
+                    /* CARD SELECTED STATE */
+                    <>
+                      {needsTarget ? (
+                        <div className="bg-yellow-600 text-black px-4 py-2 rounded font-bold animate-bounce shadow-lg border border-yellow-400 flex items-center gap-2">
+                          {isTrade ? (
+                            <ArrowLeftRight size={16} />
+                          ) : (
+                            <Wifi size={16} />
+                          )}
+                          Select Target to {isTrade ? "Trade" : "Ping"}
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handlePlayCard()}
+                          className="bg-cyan-600 hover:bg-cyan-500 text-white px-6 py-2 rounded shadow-lg font-bold flex items-center gap-2 transition-all hover:scale-105"
+                        >
+                          <Upload size={16} /> Execute {PACKETS[selectedCard].name}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setSelectedCardIdx(null)}
+                        className="bg-slate-700 hover:bg-slate-600 p-2 rounded text-white shadow-lg transition-colors"
+                      >
+                        <X size={20} />
+                      </button>
+                    </>
+                  ) : (
+                    /* NO CARD SELECTED - SHOW SKIP */
+                    (() => {
+                      const limit = me.avatar === "ADMIN" ? 7 : 5;
+                      const canSkip = me.hand.length <= limit;
+                      return (
+                        <button
+                          onClick={handleSkipTurn}
+                          disabled={!canSkip}
+                          className={`
+                            px-6 py-2 rounded shadow-lg font-bold flex items-center gap-2 transition-all
+                            ${
+                              canSkip
+                                ? "bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-500"
+                                : "bg-red-900/50 text-red-400 border border-red-800 cursor-not-allowed opacity-80"
+                            }
+                          `}
+                        >
+                          {canSkip ? (
+                            <>
+                              <SkipForward size={16} /> SKIP TURN
+                            </>
+                          ) : (
+                            <>
+                              <AlertTriangle size={16} /> HAND LIMIT EXCEEDED
+                            </>
+                          )}
+                        </button>
+                      );
+                    })()
+                  )}
+                </div>
               </div>
             )}
 
