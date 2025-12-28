@@ -1121,10 +1121,30 @@ export default function MasqueradeProtocol() {
     // Assign Roles
     const avatarKeys = shuffle(Object.keys(AVATARS));
     const directiveKeys = shuffle(Object.keys(DIRECTIVES));
-    const deck = shuffle([...DECK_TEMPLATE]);
+    // Use 'let' so we can modify the deck inside the loop
+    let deck = shuffle([...DECK_TEMPLATE]);
 
     const players = gameState.players.map((p, i) => {
-      const hand = [deck.pop(), deck.pop(), deck.pop()];
+      let hand = [];
+      let validHand = false;
+
+      // SAFETY LOOP: Keep redrawing until hand has < 3 Viruses
+      while (!validHand) {
+        // Draw 3 cards
+        hand = [deck.pop(), deck.pop(), deck.pop()];
+
+        const virusCount = hand.filter((c) => c === "VIRUS").length;
+
+        if (virusCount < 3) {
+          validHand = true; // Hand is safe
+        } else {
+          // Bad hand (Instant Death)! Return cards to deck and shuffle
+          deck.push(...hand);
+          deck = shuffle(deck);
+          hand = []; // Reset for next attempt
+        }
+      }
+
       return {
         ...p,
         avatar: avatarKeys[i % avatarKeys.length],
@@ -1149,7 +1169,9 @@ export default function MasqueradeProtocol() {
         crashCount: 0,
         logs: [
           {
-            text: `Round ${gameState.roundCount || 1} Initialized.`,
+            text: `Round ${
+              gameState.roundCount || 1
+            } Initialized. Safety protocols active.`,
             type: "neutral",
             id: Date.now(),
             viewerId: "all",
@@ -1228,11 +1250,28 @@ export default function MasqueradeProtocol() {
     // 1. Prepare new game state
     const avatarKeys = shuffle(Object.keys(AVATARS));
     const directiveKeys = shuffle(Object.keys(DIRECTIVES));
-    const deck = shuffle([...DECK_TEMPLATE]);
+    let deck = shuffle([...DECK_TEMPLATE]);
 
     // 2. Map players (Keep IDs, Names, Chips; Reset everything else)
     const players = gameState.players.map((p, i) => {
-      const hand = [deck.pop(), deck.pop(), deck.pop()];
+      let hand = [];
+      let validHand = false;
+
+      // SAFETY LOOP: Keep redrawing until hand has < 3 Viruses
+      while (!validHand) {
+        hand = [deck.pop(), deck.pop(), deck.pop()];
+        const virusCount = hand.filter((c) => c === "VIRUS").length;
+
+        if (virusCount < 3) {
+          validHand = true;
+        } else {
+          // Bad hand! Return to bottom and shuffle
+          deck.push(...hand);
+          deck = shuffle(deck);
+          hand = [];
+        }
+      }
+
       return {
         ...p,
         avatar: avatarKeys[i % avatarKeys.length],
@@ -1253,17 +1292,19 @@ export default function MasqueradeProtocol() {
     await updateDoc(
       doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
       {
-        status: "playing", // Go back to playing immediately
+        status: "playing",
         players,
         deck,
         discardPile: [],
         turnIndex: 0,
         crashCount: 0,
-        winnerId: null, // Clear winner
+        winnerId: null,
         roundCount: increment(1),
         logs: [
           {
-            text: `Round ${gameState.roundCount + 1} Initialized.`,
+            text: `Round ${
+              gameState.roundCount + 1
+            } Initialized. Safety protocols active.`,
             type: "neutral",
             id: Date.now(),
             viewerId: "all",
