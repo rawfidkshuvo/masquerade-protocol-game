@@ -85,16 +85,20 @@ const GAME_ID = "17";
 // --- AVATARS (Public Roles) ---
 const AVATARS = {
   FIREWALL: {
+    // NERF: Replaced "Immune" with "Tolerance".
+    // Immunity in a 3-player game breaks the math. Tolerance creates a "Tank" role.
     id: "FIREWALL",
     name: "Firewall",
     icon: Shield,
     color: "text-orange-500",
     bg: "bg-orange-950/50",
     border: "border-orange-600",
-    passive: "Immune to Virus cards.",
-    glitch: "Decrypt: Convert all VIRUS cards in your hand into INTEL cards.",
+    passive: "Higher Tolerance: You are eliminated at 4 Viruses instead of 3.",
+    glitch:
+      "Purge: Discard all VIRUS cards in your hand and draw that many new cards.",
   },
   SEARCH_ENGINE: {
+    // BUFF: Added "Steal". Information alone isn't enough in small groups.
     id: "SEARCH_ENGINE",
     name: "Search Engine",
     icon: Search,
@@ -102,9 +106,12 @@ const AVATARS = {
     bg: "bg-blue-950/50",
     border: "border-blue-600",
     passive: "Scan: Peek at 1 random card from a player's hand once per turn.",
-    glitch: "Index: Look at ALL cards in target player's hand (Private).",
+    glitch:
+      "Index & Extract: Look at target's hand and steal 1 card of your choice.",
   },
   MINER: {
+    // TWEAK: Draw 3 instead of 5 for Glitch.
+    // Drawing 5 cards in a 3-player game might deck out the game instantly.
     id: "MINER",
     name: "Data Miner",
     icon: HardDrive,
@@ -112,9 +119,10 @@ const AVATARS = {
     bg: "bg-emerald-950/50",
     border: "border-emerald-600",
     passive: "Draw 2 cards instead of 1 at start of turn.",
-    glitch: "Jackpot: Draw 5 cards immediately.",
+    glitch: "Jackpot: Draw 3 cards immediately.",
   },
   GHOST: {
+    // UNCHANGED: Excellent chaos role.
     id: "GHOST",
     name: "Ghost Process",
     icon: Ghost,
@@ -125,6 +133,7 @@ const AVATARS = {
     glitch: "Haunt: Swap your entire hand with target player.",
   },
   ADMIN: {
+    // UNCHANGED: The "Police" role. Necessary to stop hoarders.
     id: "ADMIN",
     name: "Sys Admin",
     icon: Terminal,
@@ -139,6 +148,7 @@ const AVATARS = {
 // --- DIRECTIVES (Hidden Win Conditions) ---
 const DIRECTIVES = {
   COLLECTOR: {
+    // UNCHANGED: 5 Intel is perfect tension with a 5-card hand limit.
     id: "COLLECTOR",
     name: "The Collector",
     desc: "Win if you have 5 INTEL cards in hand.",
@@ -146,6 +156,7 @@ const DIRECTIVES = {
     color: "text-cyan-400",
   },
   SABOTEUR: {
+    // UNCHANGED: Hard mode. High risk/reward.
     id: "SABOTEUR",
     name: "The Saboteur",
     desc: "Win if you hold at least 1 of each card type: INTEL, VIRUS, PING, PATCH.",
@@ -155,35 +166,40 @@ const DIRECTIVES = {
   ANARCHIST: {
     id: "ANARCHIST",
     name: "The Anarchist",
-    desc: "Win if ALL other living players hold at least 2 INTEL and 1 VIRUS.",
+    // CHANGED: Requirement increased to "2 Viruses" per victim
+    desc: "Win if at least 2 other living players are CRITICAL (holding 2+ VIRUS cards).",
     icon: AlertTriangle,
     color: "text-yellow-400",
   },
   SURVIVOR: {
+    // CHANGED: Lower threshold. In small games, 2 crashes usually ends the game anyway.
     id: "SURVIVOR",
     name: "The Survivor",
-    desc: "Win if you survive 2 System Crashes (Global), or be the last player standing.",
+    desc: "Win if you survive 1 System Crash (Global), or be the last player standing.",
     icon: Shield,
     color: "text-orange-400",
   },
   CORRUPTOR: {
+    // UNCHANGED: 4 Viruses is a death sentence if you fail, but instant win. Good balance.
     id: "CORRUPTOR",
     name: "The Corruptor",
-    desc: "Win if you have 4 VIRUS cards. (Overrides Elimination).",
+    desc: "Win if you hold 4 VIRUS cards. (Overrides Elimination).",
     icon: Skull,
     color: "text-fuchsia-400",
   },
   HACKER: {
+    // CHANGED: 3 Pings. 4 is statistically too hard with only 6 in the deck.
     id: "HACKER",
     name: "The Hacker",
-    desc: "Win if you use the PING card 4 times.",
+    desc: "Win if you use the PING card 3 times.",
     icon: Radio,
     color: "text-indigo-400",
   },
   ANTIVIRUS: {
+    // CHANGED: 2 Patches. 3 is too rare.
     id: "ANTIVIRUS",
     name: "Antivirus",
-    desc: "Win if you successfully use a PATCH to remove a VIRUS 3 times.",
+    desc: "Win if you successfully use a PATCH to remove a VIRUS 2 times.",
     icon: Syringe,
     color: "text-teal-400",
   },
@@ -234,11 +250,12 @@ const PACKETS = {
 
 // Deck Composition
 const DECK_TEMPLATE = [
-  ...Array(15).fill("INTEL"),
-  ...Array(10).fill("VIRUS"),
-  ...Array(5).fill("PING"),
-  ...Array(5).fill("PATCH"),
+  ...Array(18).fill("INTEL"), // +3 from original
+  ...Array(10).fill("VIRUS"), // Constant threat
+  ...Array(6).fill("PING"), // +1 (Better odds for Hacker)
+  ...Array(6).fill("PATCH"), // +1 (Better odds for Antivirus)
 ];
+// Total: 40 Cards
 
 // ---------------------------------------------------------------------------
 // UTILITIES
@@ -318,6 +335,44 @@ const ScanSelectionModal = ({ players, onSelect, onSkip }) => (
         className="text-slate-500 hover:text-white text-xs underline"
       >
         Skip Scan
+      </button>
+    </div>
+  </div>
+);
+
+const StealSelectionModal = ({ targetPlayer, onSelect, onCancel }) => (
+  <div className="fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
+    <div className="bg-slate-900 border-2 border-fuchsia-500 p-6 rounded-xl max-w-lg w-full shadow-[0_0_30px_rgba(217,70,239,0.3)] text-center relative">
+      <h3 className="text-xl font-black text-fuchsia-400 mb-2 uppercase tracking-widest flex items-center justify-center gap-2">
+        <Database size={24} /> INDEX & EXTRACT
+      </h3>
+      <p className="text-slate-300 text-sm mb-6">
+        Viewing <strong>{targetPlayer.name}</strong>'s database. <br />
+        <span className="text-white font-bold">
+          Select 1 packet to download (steal).
+        </span>
+      </p>
+
+      <div className="flex justify-center flex-wrap gap-4 mb-6">
+        {targetPlayer.hand.map((card, idx) => (
+          <div
+            key={idx}
+            className="hover:scale-110 transition-transform cursor-pointer relative group"
+            onClick={() => onSelect(card, idx)} // Pass card type and index
+          >
+            <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-fuchsia-600 text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+              STEAL THIS
+            </div>
+            <CardDisplay type={card} />
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={onCancel}
+        className="text-slate-500 hover:text-white text-xs underline"
+      >
+        Cancel Glitch
       </button>
     </div>
   </div>
@@ -568,7 +623,6 @@ const GuideModal = ({ onClose }) => (
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6 space-y-8 text-slate-300">
-        
         {/* 1. OBJECTIVE */}
         <section>
           <h3 className="text-xl font-bold text-white mb-3 flex items-center gap-2 border-b border-slate-700 pb-2">
@@ -589,13 +643,16 @@ const GuideModal = ({ onClose }) => (
             <User size={20} className="text-cyan-400" /> Public Avatars (Roles)
           </h3>
           <p className="text-xs text-slate-500 mb-4">
-            Every player is assigned a public role visible to everyone. These grant passive bonuses and powerful "Glitch" ultimates.
+            Every player is assigned a public role visible to everyone. These
+            grant passive bonuses and powerful "Glitch" ultimates.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {Object.values(AVATARS).map((av) => (
               <div
                 key={av.id}
-                className={`p-3 rounded border border-l-4 bg-slate-800/50 ${av.border} border-l-[${av.color.replace("text-", "")}]`}
+                className={`p-3 rounded border border-l-4 bg-slate-800/50 ${
+                  av.border
+                } border-l-[${av.color.replace("text-", "")}]`}
               >
                 <div className="flex items-center gap-2 mb-2">
                   {React.createElement(av.icon, {
@@ -606,11 +663,15 @@ const GuideModal = ({ onClose }) => (
                 </div>
                 <ul className="text-xs space-y-1">
                   <li className="flex gap-2">
-                    <span className="text-cyan-500 font-bold min-w-[50px]">PASSIVE:</span>
+                    <span className="text-cyan-500 font-bold min-w-[50px]">
+                      PASSIVE:
+                    </span>
                     <span className="text-slate-300">{av.passive}</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="text-fuchsia-500 font-bold min-w-[50px]">GLITCH:</span>
+                    <span className="text-fuchsia-500 font-bold min-w-[50px]">
+                      GLITCH:
+                    </span>
                     <span className="text-slate-300">{av.glitch}</span>
                   </li>
                 </ul>
@@ -625,7 +686,8 @@ const GuideModal = ({ onClose }) => (
             <Lock size={20} className="text-fuchsia-400" /> Secret Directives
           </h3>
           <p className="text-xs text-slate-500 mb-4">
-            Your true win condition. Hidden from others until you activate your Glitch.
+            Your true win condition. Hidden from others until you activate your
+            Glitch.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {Object.values(DIRECTIVES).map((dir) => (
@@ -655,10 +717,17 @@ const GuideModal = ({ onClose }) => (
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             {Object.values(PACKETS).map((card) => (
-              <div key={card.id} className="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col items-center text-center">
+              <div
+                key={card.id}
+                className="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col items-center text-center"
+              >
                 <card.icon size={24} className={`mb-2 ${card.color}`} />
-                <div className={`font-bold text-sm mb-1 ${card.color}`}>{card.name}</div>
-                <div className="text-[10px] bg-slate-900 px-2 py-0.5 rounded text-slate-400 mb-2 uppercase tracking-wider">{card.type}</div>
+                <div className={`font-bold text-sm mb-1 ${card.color}`}>
+                  {card.name}
+                </div>
+                <div className="text-[10px] bg-slate-900 px-2 py-0.5 rounded text-slate-400 mb-2 uppercase tracking-wider">
+                  {card.type}
+                </div>
                 <p className="text-xs text-slate-400">{card.desc}</p>
               </div>
             ))}
@@ -667,19 +736,27 @@ const GuideModal = ({ onClose }) => (
 
         {/* 5. MECHANICS */}
         <section>
-          <h3 className="text-xl font-bold text-white mb-3 border-b border-slate-700 pb-2">Core Mechanics</h3>
+          <h3 className="text-xl font-bold text-white mb-3 border-b border-slate-700 pb-2">
+            Core Mechanics
+          </h3>
           <ul className="list-disc pl-5 space-y-2 text-sm text-slate-400">
             <li>
-              <strong className="text-white">Crash:</strong> Holding 3 Viruses causes Immediate Elimination.
+              <strong className="text-white">Crash:</strong> Holding 3 Viruses
+              causes Immediate Elimination.
             </li>
             <li>
-              <strong className="text-white">Glitch:</strong> A one-time ultimate ability. Activating it reveals your Secret Directive to everyone.
+              <strong className="text-white">Glitch:</strong> A one-time
+              ultimate ability. Activating it reveals your Secret Directive to
+              everyone.
             </li>
             <li>
-              <strong className="text-white">Trade:</strong> Select an INTEL or VIRUS card, then select a target. You give them your card, and blindly take one random card from their hand.
+              <strong className="text-white">Trade:</strong> Select an INTEL or
+              VIRUS card, then select a target. You give them your card, and
+              blindly take one random card from their hand.
             </li>
             <li>
-              <strong className="text-white">Hand Limit:</strong> 5 Cards (7 for Admin). You must discard or skip turn if full.
+              <strong className="text-white">Hand Limit:</strong> 5 Cards (7 for
+              Admin). You must discard or skip turn if full.
             </li>
           </ul>
         </section>
@@ -728,6 +805,10 @@ export default function MasqueradeProtocol() {
   const [actionQueue, setActionQueue] = useState([]); // CHANGED: Queue for modals
   const [showScanSelection, setShowScanSelection] = useState(false); // Modal state for Search Engine
   const lastEventIdRef = useRef(0);
+
+  // Add this with other state variables
+  const [showStealModal, setShowStealModal] = useState(false);
+  const [stealTargetId, setStealTargetId] = useState(null);
 
   // --- AUTH ---
   useEffect(() => {
@@ -895,41 +976,24 @@ export default function MasqueradeProtocol() {
   // RETURNS: Number of players crashed (to update global crashCount)
   const processVirusOverload = (players, discardPile, logs) => {
     let crashCount = 0;
-
     players.forEach((p) => {
       if (p.isEliminated) return;
+      if (p.directive === "CORRUPTOR") return; // Corruptor is immune
 
-      // FIREWALL is immune.
-      // CORRUPTOR is immune (needs viruses to win).
-      if (p.avatar === "FIREWALL" || p.directive === "CORRUPTOR") return;
+      // LOGIC CHANGE: Firewall Tolerance
+      let limit = 3;
+      if (p.avatar === "FIREWALL") limit = 4;
 
       const virusCount = p.hand.filter((c) => c === "VIRUS").length;
 
-      if (virusCount >= 3) {
+      if (virusCount >= limit) {
         p.isEliminated = true;
         discardPile.push(...p.hand);
-        p.hand = []; // Wipe hand
+        p.hand = [];
         crashCount++;
-
-        logs.push({
-          text: `SYSTEM CRASH: ${p.name} overloaded by Viruses!`,
-          type: "danger",
-          id: Date.now() + Math.random(),
-          viewerId: "all",
-        });
-
-        // Only trigger visual feedback if it's the current user crashing
-        if (user && p.id === user.uid) {
-          triggerFeedback(
-            "failure",
-            "SYSTEM CRASH",
-            "Eliminated by Virus Overload",
-            Bug
-          );
-        }
+        // ... logs and feedback ...
       }
     });
-
     return crashCount;
   };
 
@@ -1223,7 +1287,8 @@ export default function MasqueradeProtocol() {
 
   // --- GAMEPLAY LOGIC ---
 
-  const checkWinConditions = async (players, logs) => {
+  // UPDATED FUNCTION SIGNATURE: Accepting the 3rd argument 'newCrashCount'
+  const checkWinConditions = async (players, logs, newCrashCount = 0) => {
     const living = players.filter((pl) => !pl.isEliminated);
 
     // 1. UNIVERSAL CONDITION: Last Man Standing
@@ -1231,40 +1296,44 @@ export default function MasqueradeProtocol() {
       return living[0].id;
     }
 
+    // CALCULATE REAL TOTAL: Database Value + Just Happened Value
+    const currentDbCrashes = gameState.crashCount || 0;
+    const totalCrashes = currentDbCrashes + newCrashCount;
+
     // 2. Directive Specific Conditions
     for (const p of players) {
       if (p.isEliminated) continue;
-      const directive = p.directive;
-      const hand = p.hand;
+
+      const d = p.directive; // 'd' for Directive
+      const h = p.hand;
       let won = false;
 
-      if (directive === "COLLECTOR") {
-        if (hand.filter((c) => c === "INTEL").length >= 5) won = true;
-      } else if (directive === "CORRUPTOR") {
-        if (hand.filter((c) => c === "VIRUS").length >= 4) won = true;
-      } else if (directive === "ANARCHIST") {
-        // CHANGED: Win if ALL other living players hold >= 2 INTEL and >= 1 VIRUS
-        const others = living.filter((pl) => pl.id !== p.id);
-        const conditionMet = others.every(
+      if (d === "COLLECTOR") {
+        if (h.filter((c) => c === "INTEL").length >= 5) won = true;
+      } else if (d === "CORRUPTOR") {
+        if (h.filter((c) => c === "VIRUS").length >= 4) won = true;
+      } else if (d === "ANARCHIST") {
+        // FIXED LOGIC: 2 other players must have 2+ Viruses
+        const criticalPlayers = living.filter(
           (pl) =>
-            pl.hand.filter((c) => c === "INTEL").length >= 2 &&
-            pl.hand.includes("VIRUS")
+            pl.id !== p.id && pl.hand.filter((c) => c === "VIRUS").length >= 2
         );
-        if (others.length > 0 && conditionMet) won = true;
-      } else if (directive === "SABOTEUR") {
-        const hasIntel = hand.includes("INTEL");
-        const hasVirus = hand.includes("VIRUS");
-        const hasPing = hand.includes("PING");
-        const hasPatch = hand.includes("PATCH");
-        if (hasIntel && hasVirus && hasPing && hasPatch) won = true;
-      } else if (directive === "SURVIVOR") {
-        if (gameState.crashCount >= 2) won = true;
-      } else if (directive === "HACKER") {
-        // CHANGED: 4 Pings
-        if ((p.pingCount || 0) >= 4) won = true;
-      } else if (directive === "ANTIVIRUS") {
-        // NEW: 3 Successful Patches
-        if ((p.antivirusCount || 0) >= 3) won = true;
+        if (criticalPlayers.length >= 2) won = true;
+      } else if (d === "SABOTEUR") {
+        if (
+          h.includes("INTEL") &&
+          h.includes("VIRUS") &&
+          h.includes("PING") &&
+          h.includes("PATCH")
+        )
+          won = true;
+      } else if (d === "SURVIVOR") {
+        // FIXED LOGIC: Use the Calculated Total (Future Sight)
+        if (totalCrashes >= 1) won = true;
+      } else if (d === "HACKER") {
+        if ((p.pingCount || 0) >= 3) won = true;
+      } else if (d === "ANTIVIRUS") {
+        if ((p.antivirusCount || 0) >= 2) won = true;
       }
 
       if (won) {
@@ -1315,6 +1384,13 @@ export default function MasqueradeProtocol() {
       const winnerIdx = updatedPlayers.findIndex((p) => p.id === winnerId);
       updatedPlayers[winnerIdx].chips =
         (updatedPlayers[winnerIdx].chips || 0) + 1;
+
+      // --- NEW CODE START ---
+      // Reveal everyone's directive
+      updatedPlayers.forEach((p) => {
+        p.revealed = true;
+      });
+      // --- NEW CODE END ---
 
       const resetReadyPlayers = updatedPlayers.map((p) => ({
         ...p,
@@ -1417,7 +1493,11 @@ export default function MasqueradeProtocol() {
     }
 
     // 7. IMMEDIATE WIN CHECK (After Drawing/Crashing Chain)
-    winnerId = await checkWinConditions(updatedPlayers, logs);
+    winnerId = await checkWinConditions(
+      updatedPlayers,
+      logs,
+      globalCrashAccumulator
+    );
     if (winnerId) {
       const winnerIdx = updatedPlayers.findIndex((p) => p.id === winnerId);
       updatedPlayers[winnerIdx].chips =
@@ -1514,6 +1594,93 @@ export default function MasqueradeProtocol() {
     }
 
     await updateDoc(ref, updates);
+  };
+
+  const handleStealSelection = async (cardType, cardIndex) => {
+    if (!roomId || !stealTargetId) return;
+
+    const pIdx = gameState.players.findIndex((p) => p.id === user.uid);
+    const me = gameState.players[pIdx];
+    const tIdx = gameState.players.findIndex((p) => p.id === stealTargetId);
+    const target = gameState.players[tIdx];
+
+    // 1. Close Modal
+    setShowStealModal(false);
+    setStealTargetId(null);
+
+    // 2. Prepare Data for Next Turn
+    const players = JSON.parse(JSON.stringify(gameState.players));
+    const logs = [];
+
+    // 3. Mark Glitch as Used & Reveal Directive
+    players[pIdx].glitchUsed = true;
+    players[pIdx].revealed = true;
+
+    // 4. Perform the Specific Steal
+    // Remove specific card from target at the specific index
+    players[tIdx].hand.splice(cardIndex, 1);
+    // Add that card to my hand
+    players[pIdx].hand.push(cardType);
+
+    // 5. Logs & Feedback
+    logs.push({
+      text: `⚠️ GLITCH: ${me.name} Indexed ${target.name} and extracted a ${cardType}.`,
+      type: "glitch",
+      id: Date.now(),
+      viewerId: "all",
+    });
+
+    triggerFeedback(
+      "glitch",
+      "DOWNLOAD COMPLETE",
+      `Acquired ${cardType}`,
+      Search
+    );
+
+    // 6. Check Win Conditions & Save (Standard Next Turn Logic)
+    // We reuse the existing logic flow here to ensure crashes/wins are checked
+
+    let discardPile = [...gameState.discardPile];
+    let deck = [...gameState.deck];
+
+    // --- IMMEDIATE CRASH CHECK ---
+    const crashedCount = processVirusOverload(players, discardPile, logs);
+
+    // --- IMMEDIATE WIN CHECK ---
+    const winnerId = await checkWinConditions(players, logs, crashedCount);
+
+    if (winnerId) {
+      // ... (Copy your standard win update logic here from activateGlitch) ...
+      const winnerIdx = players.findIndex((p) => p.id === winnerId);
+      players[winnerIdx].chips = (players[winnerIdx].chips || 0) + 1;
+      players.forEach((p) => {
+        p.revealed = true;
+      });
+
+      const updates = {
+        players: players.map((p) => ({ ...p, ready: false })),
+        status: "finished",
+        winnerId,
+        discardPile,
+        logs: arrayUnion(...logs),
+        crashCount: increment(crashedCount),
+      };
+      await updateDoc(
+        doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
+        updates
+      );
+      return;
+    }
+
+    if (crashedCount > 0) {
+      await updateDoc(
+        doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
+        { crashCount: increment(crashedCount) }
+      );
+    }
+
+    // Proceed to next turn
+    await nextTurn(players, deck, discardPile, logs);
   };
 
   const handlePlayCard = async (targetId = null) => {
@@ -1656,10 +1823,17 @@ export default function MasqueradeProtocol() {
     setSelectedCardIdx(null);
 
     // CHECK WIN IMMEDIATELY AFTER ACTION
-    const winnerId = await checkWinConditions(players, logs);
+    const winnerId = await checkWinConditions(players, logs, crashedCount);
     if (winnerId) {
       const winnerIdx = players.findIndex((p) => p.id === winnerId);
       players[winnerIdx].chips = (players[winnerIdx].chips || 0) + 1;
+
+      // --- NEW CODE START ---
+      // Reveal everyone's directive
+      players.forEach((p) => {
+        p.revealed = true;
+      });
+      // --- NEW CODE END ---
 
       const resetReadyPlayers = players.map((p) => ({ ...p, ready: false }));
       const updates = {
@@ -1698,7 +1872,7 @@ export default function MasqueradeProtocol() {
   // --- SKIP TURN LOGIC ---
   const handleSkipTurn = async () => {
     if (!roomId || !gameState) return;
-    
+
     const pIdx = gameState.players.findIndex((p) => p.id === user.uid);
     const me = gameState.players[pIdx];
 
@@ -1715,19 +1889,21 @@ export default function MasqueradeProtocol() {
     }
 
     // 2. Prepare Logs
-    const logs = [{
-      text: `${me.name} skipped their turn.`,
-      type: "neutral",
-      id: Date.now(),
-      viewerId: "all",
-    }];
+    const logs = [
+      {
+        text: `${me.name} skipped their turn.`,
+        type: "neutral",
+        id: Date.now(),
+        viewerId: "all",
+      },
+    ];
 
     // 3. Pass turn to next player (reuses existing nextTurn logic)
     // We pass the current state, nextTurn handles the incrementing and drawing for the next person
     await nextTurn(
-      gameState.players, 
-      gameState.deck, 
-      gameState.discardPile, 
+      gameState.players,
+      gameState.deck,
+      gameState.discardPile,
       logs
     );
   };
@@ -1891,6 +2067,13 @@ export default function MasqueradeProtocol() {
       });
     } else if (avatar === "SEARCH_ENGINE") {
       if (!targetId) return;
+      // --- NEW LOGIC START ---
+      // Instead of executing immediately, open the selection UI
+      setStealTargetId(targetId);
+      setShowStealModal(true);
+      setGlitchConfirm(false); // Close the confirmation modal
+      return; // STOP execution here. Wait for modal selection.
+      // --- NEW LOGIC END ---
       const target = players.find((p) => p.id === targetId);
 
       eventData = {
@@ -1929,10 +2112,17 @@ export default function MasqueradeProtocol() {
     const crashedCount = processVirusOverload(players, discardPile, logs);
 
     // CHECK WIN IMMEDIATELY AFTER GLITCH
-    const winnerId = await checkWinConditions(players, logs);
+    const winnerId = await checkWinConditions(players, logs, crashedCount);
     if (winnerId) {
       const winnerIdx = players.findIndex((p) => p.id === winnerId);
       players[winnerIdx].chips = (players[winnerIdx].chips || 0) + 1;
+
+      // --- NEW CODE START ---
+      // Reveal everyone's directive
+      players.forEach((p) => {
+        p.revealed = true;
+      });
+      // --- NEW CODE END ---
 
       const resetReadyPlayers = players.map((p) => ({ ...p, ready: false }));
       const updates = {
@@ -2246,6 +2436,18 @@ export default function MasqueradeProtocol() {
           />
         )}
 
+        {/* Add this inside the main return statement */}
+        {showStealModal && stealTargetId && (
+          <StealSelectionModal
+            targetPlayer={gameState.players.find((p) => p.id === stealTargetId)}
+            onSelect={handleStealSelection}
+            onCancel={() => {
+              setShowStealModal(false);
+              setStealTargetId(null);
+            }}
+          />
+        )}
+
         {/* TOP BAR */}
         <div className="h-14 bg-slate-900/80 border-b border-slate-800 flex items-center justify-between px-4 z-50 backdrop-blur-md sticky top-0">
           <div className="flex items-center gap-2">
@@ -2370,19 +2572,22 @@ export default function MasqueradeProtocol() {
                     <div
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (p.revealed) {
+                        // FIX 1: Allow inspection if revealed OR game is finished
+                        if (p.revealed || gameState.status === "finished") {
                           setInspectingItem(DIRECTIVES[p.directive]);
                         } else {
                           setInspectingItem(HIDDEN_DIRECTIVE_INFO);
                         }
                       }}
                       className={`w-8 h-8 rounded flex items-center justify-center border cursor-pointer hover:scale-110 transition-transform ${
-                        p.revealed
+                        // FIX 2: Change border color if revealed OR game is finished
+                        p.revealed || gameState.status === "finished"
                           ? "border-red-500 bg-red-950"
                           : "border-slate-700 bg-slate-800"
                       }`}
                     >
-                      {p.revealed ? (
+                      {/* FIX 3: Show Icon if revealed OR game is finished */}
+                      {p.revealed || gameState.status === "finished" ? (
                         React.createElement(DIRECTIVES[p.directive].icon, {
                           size: 16,
                           className: "text-red-400",
@@ -2575,12 +2780,12 @@ export default function MasqueradeProtocol() {
                   {/* --- NEW: PROGRESS COUNTERS --- */}
                   {me.directive === "HACKER" && (
                     <div className="absolute -top-2 -right-2 bg-indigo-900 text-indigo-100 text-[10px] px-2 py-0.5 rounded-full border border-indigo-500 font-bold shadow-lg z-10 flex items-center gap-1">
-                      <Wifi size={10} /> {me.pingCount || 0}/4
+                      <Wifi size={10} /> {me.pingCount || 0}/3
                     </div>
                   )}
                   {me.directive === "ANTIVIRUS" && (
                     <div className="absolute -top-2 -right-2 bg-teal-900 text-teal-100 text-[10px] px-2 py-0.5 rounded-full border border-teal-500 font-bold shadow-lg z-10 flex items-center gap-1">
-                      <Syringe size={10} /> {me.antivirusCount || 0}/3
+                      <Syringe size={10} /> {me.antivirusCount || 0}/2
                     </div>
                   )}
                   {/* ----------------------------- */}
@@ -2673,7 +2878,8 @@ export default function MasqueradeProtocol() {
                           onClick={() => handlePlayCard()}
                           className="bg-cyan-600 hover:bg-cyan-500 text-white px-6 py-2 rounded shadow-lg font-bold flex items-center gap-2 transition-all hover:scale-105"
                         >
-                          <Upload size={16} /> Execute {PACKETS[selectedCard].name}
+                          <Upload size={16} /> Execute{" "}
+                          {PACKETS[selectedCard].name}
                         </button>
                       )}
                       <button
