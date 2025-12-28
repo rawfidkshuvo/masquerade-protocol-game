@@ -1065,7 +1065,7 @@ export default function MasqueradeProtocol() {
       setLoading(false);
       return;
     }
-    if (data.players.length >= 8) {
+    if (data.players.length >= 6) {
       setError("Server full.");
       setLoading(false);
       return;
@@ -2291,7 +2291,7 @@ export default function MasqueradeProtocol() {
 
           <div className="bg-black/40 rounded p-4 mb-8 border border-slate-800">
             <h3 className="text-slate-500 text-xs uppercase tracking-widest mb-4">
-              Connected Clients ({gameState.players.length}/8)
+              Connected Clients ({gameState.players.length}/6)
             </h3>
             <div className="space-y-2">
               {gameState.players.map((p) => (
