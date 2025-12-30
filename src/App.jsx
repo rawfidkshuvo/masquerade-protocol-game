@@ -2512,7 +2512,7 @@ export default function MasqueradeProtocol() {
               onClick={() => setShowLogs(!showLogs)}
               className={`p-2 rounded-full ${
                 showLogs
-                  ? "bg-green-900 text-green-400"
+                  ? "bg-cyan-900 text-cyan-400"
                   : "text-gray-400 hover:bg-gray-800"
               }`}
             >
