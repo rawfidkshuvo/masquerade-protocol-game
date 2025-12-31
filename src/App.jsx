@@ -2002,31 +2002,53 @@ export default function MasqueradeProtocol() {
     const avatar = me.avatar;
 
     if (avatar === "FIREWALL") {
-      // NEW GLITCH: Convert Virus to Intel
-      let convertedCount = 0;
-      players[pIdx].hand = players[pIdx].hand.map((c) => {
-        if (c === "VIRUS") {
-          convertedCount++;
-          return "INTEL";
-        }
-        return c;
-      });
+      // 1. Identify and Discard Viruses
+      const originalHandSize = players[pIdx].hand.length;
+      // Keep only non-virus cards
+      const nonVirusHand = players[pIdx].hand.filter((c) => c !== "VIRUS");
+      const virusCount = originalHandSize - nonVirusHand.length;
 
+      // Add discarded viruses to the discard pile
+      for (let i = 0; i < virusCount; i++) {
+        discardPile.push("VIRUS");
+      }
+
+      // Update player hand to remove viruses immediately
+      players[pIdx].hand = nonVirusHand;
+
+      // 2. Draw Replacement Cards
+      let drawn = 0;
+      for (let i = 0; i < virusCount; i++) {
+        // Handle empty deck (Reshuffle discard pile)
+        if (deck.length === 0 && discardPile.length > 0) {
+          const newDeck = shuffle([...discardPile]);
+          discardPile = [];
+          deck.push(...newDeck);
+        }
+
+        // Draw card
+        if (deck.length > 0) {
+          players[pIdx].hand.push(deck.pop());
+          drawn++;
+        }
+      }
+
+      // 3. Feedback
       queueAction({
-        title: "SYSTEM DECRYPTION",
-        message: `${convertedCount} Virus(es) decrypted into Intel.`,
+        title: "FIREWALL PURGE",
+        message: `Discarded ${virusCount} Viruses. Downloaded ${drawn} new packets.`,
         cards: [],
       });
 
       logs.push({
-        text: "Firewall Decryption complete. Malicious code converted to valuable data.",
+        text: `Firewall Purge: ${me.name} discarded ${virusCount} Viruses and drew ${drawn} new cards.`,
         type: "success",
         id: Date.now() + 1,
         viewerId: "all",
       });
     } else if (avatar === "MINER") {
       let drawn = 0;
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 3; i++) {
         if (deck.length === 0 && discardPile.length > 0) {
           const newDeck = shuffle([...discardPile]);
           discardPile = [];
@@ -2045,7 +2067,7 @@ export default function MasqueradeProtocol() {
       });
 
       logs.push({
-        text: "Miner hit the Jackpot. 5 Cards drawn.",
+        text: "Miner hit the Jackpot. 3 Cards drawn.",
         type: "success",
         id: Date.now() + 1,
         viewerId: "all",
