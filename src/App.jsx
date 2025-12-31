@@ -448,18 +448,18 @@ const RoleInfoModal = ({ item, onClose, onActivateGlitch, canGlitch }) => {
 
           {onActivateGlitch && (
             <div className="mt-6 w-full">
-              <button
-                onClick={onActivateGlitch}
-                disabled={!canGlitch || !isMyTurn}
-                className={`w-full py-3 font-bold rounded flex items-center justify-center gap-2
-                  ${canGlitch && isMyTurn
-                    ? "bg-red-600 hover:bg-red-500 animate-pulse text-white shadow-[0_0_15px_rgba(220,38,38,0.5)]"
-                    : "bg-slate-800 text-slate-500 cursor-not-allowed"
-                  }`}
-              >
-                <Zap size={18} />
-                {canGlitch && isMyTurn ? "ACTIVATE GLITCH" : "GLITCH UNAVAILABLE"}
-              </button>
+              {canGlitch ? (
+                <button
+                  onClick={onActivateGlitch}
+                  className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded flex items-center justify-center gap-2 animate-pulse shadow-[0_0_15px_rgba(220,38,38,0.5)]"
+                >
+                  <Zap size={18} /> ACTIVATE GLITCH
+                </button>
+              ) : (
+                <div className="w-full py-3 bg-slate-800 text-slate-500 font-bold rounded flex items-center justify-center gap-2 cursor-not-allowed">
+                  GLITCH UNAVAILABLE
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1953,6 +1953,17 @@ export default function MasqueradeProtocol() {
     const pIdx = gameState.players.findIndex((p) => p.id === user.uid);
     const me = gameState.players[pIdx];
 
+    // --- ADD THIS BLOCK ---
+    if (gameState.turnIndex !== pIdx) {
+      triggerFeedback(
+        "failure",
+        "ACCESS DENIED",
+        "Wait for your processing cycle (Turn).",
+        Lock
+      );
+      return;
+    }
+    // ----------------------
     if (me.glitchUsed) return;
 
     // GHOST IMMUNITY CHECK
@@ -2781,7 +2792,7 @@ export default function MasqueradeProtocol() {
                     // Show Inspection Modal for Self Avatar with Glitch Button
                     setInspectingItem({
                       ...AVATARS[me.avatar],
-                      canGlitch: !me.glitchUsed && !me.isEliminated,
+                      canGlitch: !me.glitchUsed && !me.isEliminated && isMyTurn,
                     });
                   }}
                   className={`
@@ -2790,7 +2801,7 @@ export default function MasqueradeProtocol() {
                   `}
                 >
                   {/* Pulse dot if glitch ready */}
-                  {!me.glitchUsed && !me.isEliminated && me.isMyTurn && (
+                  {!me.glitchUsed && !me.isEliminated && (
                     <span className="absolute -top-1 -right-1 flex h-3 w-3">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
