@@ -448,7 +448,7 @@ const RoleInfoModal = ({ item, onClose, onActivateGlitch, canGlitch }) => {
 
           {onActivateGlitch && (
             <div className="mt-6 w-full">
-              {canGlitch ? (
+              {canGlitch && isMyTurn ? (
                 <button
                   onClick={onActivateGlitch}
                   className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded flex items-center justify-center gap-2 animate-pulse shadow-[0_0_15px_rgba(220,38,38,0.5)]"
