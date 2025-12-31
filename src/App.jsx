@@ -448,18 +448,18 @@ const RoleInfoModal = ({ item, onClose, onActivateGlitch, canGlitch }) => {
 
           {onActivateGlitch && (
             <div className="mt-6 w-full">
-              {canGlitch && isMyTurn ? (
-                <button
-                  onClick={onActivateGlitch}
-                  className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded flex items-center justify-center gap-2 animate-pulse shadow-[0_0_15px_rgba(220,38,38,0.5)]"
-                >
-                  <Zap size={18} /> ACTIVATE GLITCH
-                </button>
-              ) : (
-                <div className="w-full py-3 bg-slate-800 text-slate-500 font-bold rounded flex items-center justify-center gap-2 cursor-not-allowed">
-                  GLITCH UNAVAILABLE
-                </div>
-              )}
+              <button
+                onClick={onActivateGlitch}
+                disabled={!canGlitch || !isMyTurn}
+                className={`w-full py-3 font-bold rounded flex items-center justify-center gap-2
+                  ${canGlitch && isMyTurn
+                    ? "bg-red-600 hover:bg-red-500 animate-pulse text-white shadow-[0_0_15px_rgba(220,38,38,0.5)]"
+                    : "bg-slate-800 text-slate-500 cursor-not-allowed"
+                  }`}
+              >
+                <Zap size={18} />
+                {canGlitch && isMyTurn ? "ACTIVATE GLITCH" : "GLITCH UNAVAILABLE"}
+              </button>
             </div>
           )}
         </div>
