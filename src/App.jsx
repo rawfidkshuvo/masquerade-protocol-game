@@ -1135,7 +1135,7 @@ export default function MasqueradeProtocol() {
 
         const virusCount = hand.filter((c) => c === "VIRUS").length;
 
-        if (virusCount < 3) {
+        if (virusCount < 2) {
           validHand = true; // Hand is safe
         } else {
           // Bad hand (Instant Death)! Return cards to deck and shuffle
@@ -1262,7 +1262,7 @@ export default function MasqueradeProtocol() {
         hand = [deck.pop(), deck.pop(), deck.pop()];
         const virusCount = hand.filter((c) => c === "VIRUS").length;
 
-        if (virusCount < 3) {
+        if (virusCount < 2) {
           validHand = true;
         } else {
           // Bad hand! Return to bottom and shuffle
