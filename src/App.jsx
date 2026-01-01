@@ -2598,6 +2598,12 @@ export default function MasqueradeProtocol() {
                     }
                   `}
                 >
+                  {/* PLAYING STATUS BADGE */}
+                  {isActive && (
+                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-cyan-600 text-cyan-100 text-[9px] px-2 py-0.5 rounded-full font-bold shadow-lg animate-pulse z-10 whitespace-nowrap flex items-center gap-1">
+                      <PlayCircle size={8} /> PLAYING
+                    </div>
+                  )}
                   <div className="flex justify-between items-start mb-2">
                     <span className="font-bold text-xs truncate flex items-center gap-1">
                       {p.revealed && (
