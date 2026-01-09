@@ -378,6 +378,75 @@ const StealSelectionModal = ({ targetPlayer, onSelect, onCancel }) => (
   </div>
 );
 
+const DiscardSelectionModal = ({ hand, limit, onConfirm, onCancel }) => {
+  const [selectedIndices, setSelectedIndices] = useState([]);
+  const discardCountNeeded = hand.length - limit;
+
+  const toggleCard = (idx) => {
+    if (selectedIndices.includes(idx)) {
+      setSelectedIndices(prev => prev.filter(i => i !== idx));
+    } else {
+      if (selectedIndices.length < discardCountNeeded) {
+        setSelectedIndices(prev => [...prev, idx]);
+      }
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
+      <div className="bg-slate-900 border-2 border-red-500/50 p-6 rounded-xl max-w-lg w-full shadow-[0_0_30px_rgba(220,38,38,0.3)] text-center relative">
+        <h3 className="text-xl font-black text-red-400 mb-2 uppercase tracking-widest flex items-center justify-center gap-2">
+          <AlertTriangle size={24} /> Memory Overflow
+        </h3>
+        <p className="text-slate-300 text-sm mb-2">
+          Hand limit exceeded ({hand.length}/{limit}).
+        </p>
+        <p className="text-white font-bold text-lg mb-6">
+          Select <span className="text-red-400">{discardCountNeeded}</span> data packet(s) to purge.
+        </p>
+
+        <div className="flex justify-center flex-wrap gap-4 mb-8">
+          {hand.map((card, idx) => {
+            const isSelected = selectedIndices.includes(idx);
+            return (
+              <div
+                key={idx}
+                onClick={() => toggleCard(idx)}
+                className={`transition-all duration-200 cursor-pointer ${isSelected ? "scale-90 opacity-50 grayscale ring-2 ring-red-500 rounded-lg" : "hover:scale-105"}`}
+              >
+                <CardDisplay type={card} small />
+                {isSelected && (
+                  <div className="mt-1 text-[10px] text-red-500 font-bold uppercase tracking-wider">
+                    Purging
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={() => onConfirm(selectedIndices)}
+          disabled={selectedIndices.length !== discardCountNeeded}
+          className={`w-full py-3 rounded font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
+            selectedIndices.length === discardCountNeeded
+              ? "bg-red-600 hover:bg-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.5)]"
+              : "bg-slate-800 text-slate-500 cursor-not-allowed"
+          }`}
+        >
+          {selectedIndices.length === discardCountNeeded ? (
+            <>
+              <Trash2 size={18} /> Confirm Purge & End Turn
+            </>
+          ) : (
+            <>Select {discardCountNeeded - selectedIndices.length} more</>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const RoleInfoModal = ({ item, onClose, onActivateGlitch, canGlitch }) => {
   if (!item) return null;
   const isAvatar = item.passive !== undefined;
@@ -805,6 +874,7 @@ export default function MasqueradeProtocol() {
   const [actionQueue, setActionQueue] = useState([]); // CHANGED: Queue for modals
   const [showScanSelection, setShowScanSelection] = useState(false); // Modal state for Search Engine
   const lastEventIdRef = useRef(0);
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
 
   // Add this with other state variables
   const [showStealModal, setShowStealModal] = useState(false);
@@ -1384,6 +1454,41 @@ export default function MasqueradeProtocol() {
     return null;
   };
 
+  const handleConfirmDiscard = async (selectedIndices) => {
+    if (!roomId || !gameState) return;
+
+    const pIdx = gameState.players.findIndex((p) => p.id === user.uid);
+    const me = gameState.players[pIdx];
+    
+    // Create copies to modify
+    const players = JSON.parse(JSON.stringify(gameState.players));
+    const discardPile = [...gameState.discardPile];
+    const logs = [];
+
+    // Sort indices descending to splice correctly without shifting
+    selectedIndices.sort((a, b) => b - a);
+
+    const discardedNames = [];
+    selectedIndices.forEach((idx) => {
+      const card = players[pIdx].hand.splice(idx, 1)[0];
+      discardPile.push(card);
+      discardedNames.push(card);
+    });
+
+    logs.push({
+      text: `${me.name} purged memory: ${discardedNames.join(", ")}.`,
+      type: "neutral",
+      id: Date.now(),
+      viewerId: "all",
+    });
+
+    // Close modal
+    setShowDiscardModal(false);
+
+    // Proceed to next turn with the cleaned up hand
+    await nextTurn(players, gameState.deck, discardPile, logs);
+  };
+
   const nextTurn = async (
     updatedPlayers,
     deck,
@@ -1392,32 +1497,32 @@ export default function MasqueradeProtocol() {
     eventData = null
   ) => {
     // 1. Current Player Hand Limit Check (Discard Phase)
-    const currentP = updatedPlayers[gameState.turnIndex];
-    let discardedCards = [];
+    // const currentP = updatedPlayers[gameState.turnIndex];
+    // let discardedCards = [];
 
-    if (!currentP.isEliminated) {
-      const limit = currentP.avatar === "ADMIN" ? 7 : 5;
-      while (currentP.hand.length > limit) {
-        const randomIdx = Math.floor(Math.random() * currentP.hand.length);
-        const discarded = currentP.hand.splice(randomIdx, 1)[0];
-        discardPile.push(discarded);
-        discardedCards.push(discarded);
-        logs.push({
-          text: `${currentP.name} discarded excess data (${discarded}).`,
-          type: "neutral",
-          id: Date.now() + discardedCards.length,
-          viewerId: "all",
-        });
-      }
-    }
+    // if (!currentP.isEliminated) {
+    //   const limit = currentP.avatar === "ADMIN" ? 7 : 5;
+    //   while (currentP.hand.length > limit) {
+    //     const randomIdx = Math.floor(Math.random() * currentP.hand.length);
+    //     const discarded = currentP.hand.splice(randomIdx, 1)[0];
+    //     discardPile.push(discarded);
+    //     discardedCards.push(discarded);
+    //     logs.push({
+    //       text: `${currentP.name} discarded excess data (${discarded}).`,
+    //       type: "neutral",
+    //       id: Date.now() + discardedCards.length,
+    //       viewerId: "all",
+    //     });
+    //   }
+    // }
 
-    if (discardedCards.length > 0) {
-      queueAction({
-        title: "MEMORY OVERFLOW",
-        message: `Hand limit exceeded. Auto-purged data:`,
-        cards: discardedCards.map((c) => ({ type: c, label: "Purged" })),
-      });
-    }
+    // if (discardedCards.length > 0) {
+    //   queueAction({
+    //     title: "MEMORY OVERFLOW",
+    //     message: `Hand limit exceeded. Auto-purged data:`,
+    //     cards: discardedCards.map((c) => ({ type: c, label: "Purged" })),
+    //   });
+    // }
 
     // 2. IMMEDIATE WIN CHECK (Priority over Death)
     let winnerId = await checkWinConditions(updatedPlayers, logs);
@@ -1920,12 +2025,7 @@ export default function MasqueradeProtocol() {
     // 1. Check Hand Limit
     const limit = me.avatar === "ADMIN" ? 7 : 5;
     if (me.hand.length > limit) {
-      triggerFeedback(
-        "failure",
-        "MEMORY OVERFLOW",
-        `Cannot skip. Hand limit (${limit}) exceeded.`,
-        AlertTriangle
-      );
+      setShowDiscardModal(true);
       return;
     }
 
@@ -2522,6 +2622,15 @@ export default function MasqueradeProtocol() {
           />
         )}
 
+        {showDiscardModal && (
+          <DiscardSelectionModal
+            hand={gameState.players.find(p => p.id === user.uid).hand}
+            limit={gameState.players.find(p => p.id === user.uid).avatar === "ADMIN" ? 7 : 5}
+            onConfirm={handleConfirmDiscard}
+            onCancel={() => setShowDiscardModal(false)} // Optional, strictly they shouldn't cancel if they must discard
+          />
+        )}
+
         {/* TOP BAR */}
         <div className="h-14 bg-slate-900/80 border-b border-slate-800 flex items-center justify-between px-4 z-50 backdrop-blur-md sticky top-0">
           <div className="flex items-center gap-2">
@@ -2974,30 +3083,30 @@ export default function MasqueradeProtocol() {
                       </button>
                     </>
                   ) : (
-                    /* NO CARD SELECTED - SHOW SKIP */
+                    /* NO CARD SELECTED - SHOW SKIP / DISCARD */
                     (() => {
                       const limit = me.avatar === "ADMIN" ? 7 : 5;
-                      const canSkip = me.hand.length <= limit;
+                      const isOverLimit = me.hand.length > limit;
+
                       return (
                         <button
                           onClick={handleSkipTurn}
-                          disabled={!canSkip}
                           className={`
                             px-6 py-2 rounded shadow-lg font-bold flex items-center gap-2 transition-all
                             ${
-                              canSkip
-                                ? "bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-500"
-                                : "bg-red-900/50 text-red-400 border border-red-800 cursor-not-allowed opacity-80"
+                              isOverLimit
+                                ? "bg-red-600 hover:bg-red-500 text-white border border-red-400 animate-pulse"
+                                : "bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-500"
                             }
                           `}
                         >
-                          {canSkip ? (
+                          {isOverLimit ? (
                             <>
-                              <SkipForward size={16} /> SKIP TURN
+                              <Trash2 size={16} /> DISCARD & END TURN
                             </>
                           ) : (
                             <>
-                              <AlertTriangle size={16} /> HAND LIMIT EXCEEDED
+                              <SkipForward size={16} /> SKIP TURN
                             </>
                           )}
                         </button>
