@@ -875,6 +875,8 @@ export default function MasqueradeProtocol() {
   const [showScanSelection, setShowScanSelection] = useState(false); // Modal state for Search Engine
   const lastEventIdRef = useRef(0);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
+  // Add this with your other useState hooks
+  const [pendingTurnData, setPendingTurnData] = useState(null);
 
   // Add this with other state variables
   const [showStealModal, setShowStealModal] = useState(false);
@@ -1455,38 +1457,71 @@ export default function MasqueradeProtocol() {
   };
 
   const handleConfirmDiscard = async (selectedIndices) => {
-    if (!roomId || !gameState) return;
+    // Determine source of data: Pending (after action) or Current GameState (skip turn)
+    const sourceData = pendingTurnData || {
+      players: JSON.parse(JSON.stringify(gameState.players)),
+      deck: [...gameState.deck],
+      discardPile: [...gameState.discardPile],
+      logs: [],
+      eventData: null
+    };
 
-    const pIdx = gameState.players.findIndex((p) => p.id === user.uid);
-    const me = gameState.players[pIdx];
+    const pIdx = sourceData.players.findIndex((p) => p.id === user.uid);
+    const me = sourceData.players[pIdx];
     
-    // Create copies to modify
-    const players = JSON.parse(JSON.stringify(gameState.players));
-    const discardPile = [...gameState.discardPile];
-    const logs = [];
-
-    // Sort indices descending to splice correctly without shifting
+    // Sort indices descending to splice correctly
     selectedIndices.sort((a, b) => b - a);
 
     const discardedNames = [];
     selectedIndices.forEach((idx) => {
-      const card = players[pIdx].hand.splice(idx, 1)[0];
-      discardPile.push(card);
+      const card = me.hand.splice(idx, 1)[0];
+      sourceData.discardPile.push(card);
       discardedNames.push(card);
     });
 
-    logs.push({
+    // Add log
+    sourceData.logs.push({
       text: `${me.name} purged memory: ${discardedNames.join(", ")}.`,
       type: "neutral",
       id: Date.now(),
       viewerId: "all",
     });
 
-    // Close modal
+    // Clear temp state and modal
+    setPendingTurnData(null);
     setShowDiscardModal(false);
 
-    // Proceed to next turn with the cleaned up hand
-    await nextTurn(players, gameState.deck, discardPile, logs);
+    // Commit to database
+    await nextTurn(
+      sourceData.players, 
+      sourceData.deck, 
+      sourceData.discardPile, 
+      sourceData.logs, 
+      sourceData.eventData
+    );
+  };
+
+  // Helper to check limits before passing turn
+  const checkLimitAndFinalize = async (players, deck, discardPile, logs, eventData) => {
+    const pIdx = gameState.players.findIndex((p) => p.id === user.uid);
+    const me = players[pIdx]; // Use the 'players' passed in (the future state), not gameState
+    const limit = me.avatar === "ADMIN" ? 7 : 5;
+
+    if (me.hand.length > limit) {
+      // 1. Save the calculated result of the move to temporary state
+      setPendingTurnData({
+        players,
+        deck,
+        discardPile,
+        logs,
+        eventData
+      });
+      // 2. Open the modal
+      setShowDiscardModal(true);
+    } else {
+      // 3. Hand is fine, proceed to next turn directly
+      await nextTurn(players, deck, discardPile, logs, eventData);
+    }
   };
 
   const nextTurn = async (
@@ -1826,7 +1861,7 @@ export default function MasqueradeProtocol() {
     }
 
     // Proceed to next turn
-    await nextTurn(players, deck, discardPile, logs);
+    await checkLimitAndFinalize(players, deck, discardPile, logs); // (Steal usually has no eventData passed here)
   };
 
   const handlePlayCard = async (targetId = null) => {
@@ -2012,7 +2047,11 @@ export default function MasqueradeProtocol() {
       );
     }
 
-    await nextTurn(players, deck, discardPile, logs, eventData);
+    // --- CHANGE STARTS HERE ---
+    // OLD: await nextTurn(players, deck, discardPile, logs, eventData);
+    // NEW:
+    await checkLimitAndFinalize(players, deck, discardPile, logs, eventData);
+    // --- CHANGE ENDS HERE ---
   };
 
   // --- SKIP TURN LOGIC ---
@@ -2021,26 +2060,30 @@ export default function MasqueradeProtocol() {
 
     const pIdx = gameState.players.findIndex((p) => p.id === user.uid);
     const me = gameState.players[pIdx];
-
-    // 1. Check Hand Limit
     const limit = me.avatar === "ADMIN" ? 7 : 5;
+
+    // Prepare base data for a skip (no changes to hand yet)
+    const logs = [{
+      text: `${me.name} skipped their turn.`,
+      type: "neutral",
+      id: Date.now(),
+      viewerId: "all",
+    }];
+
+    // If Over Limit: Force Discard Logic
     if (me.hand.length > limit) {
+      setPendingTurnData({
+        players: JSON.parse(JSON.stringify(gameState.players)),
+        deck: [...gameState.deck],
+        discardPile: [...gameState.discardPile],
+        logs: logs,
+        eventData: null
+      });
       setShowDiscardModal(true);
       return;
     }
 
-    // 2. Prepare Logs
-    const logs = [
-      {
-        text: `${me.name} skipped their turn.`,
-        type: "neutral",
-        id: Date.now(),
-        viewerId: "all",
-      },
-    ];
-
-    // 3. Pass turn to next player (reuses existing nextTurn logic)
-    // We pass the current state, nextTurn handles the incrementing and drawing for the next person
+    // If Safe: Just Next Turn
     await nextTurn(
       gameState.players,
       gameState.deck,
@@ -2329,7 +2372,7 @@ export default function MasqueradeProtocol() {
       );
     }
 
-    await nextTurn(players, deck, discardPile, logs, eventData);
+    await checkLimitAndFinalize(players, deck, discardPile, logs, eventData);
   };
 
   if (isMaintenance) {
@@ -2624,10 +2667,15 @@ export default function MasqueradeProtocol() {
 
         {showDiscardModal && (
           <DiscardSelectionModal
-            hand={gameState.players.find(p => p.id === user.uid).hand}
+            // LOGIC CHANGE: Look at pendingTurnData first
+            hand={
+              pendingTurnData 
+                ? pendingTurnData.players.find(p => p.id === user.uid).hand
+                : gameState.players.find(p => p.id === user.uid).hand
+            }
             limit={gameState.players.find(p => p.id === user.uid).avatar === "ADMIN" ? 7 : 5}
             onConfirm={handleConfirmDiscard}
-            onCancel={() => setShowDiscardModal(false)} // Optional, strictly they shouldn't cancel if they must discard
+            onCancel={() => {}} // Disabling cancel is safer to force the discard
           />
         )}
 
