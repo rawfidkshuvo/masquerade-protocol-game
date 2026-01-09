@@ -304,7 +304,7 @@ const GameLogo = () => (
 
 const GameLogoBig = () => (
   <div className="flex items-center justify-center gap-2 opacity-60 mt-auto pb-4 pt-2 relative z-10 pointer-events-none">
-    <Cpu size={20} className="text-cyan-500 animate-pulse" />
+    <Cpu size={22} className="text-cyan-500 animate-pulse" />
     <span className="text-[20px] font-black tracking-[0.2em] text-cyan-500 uppercase font-mono shadow-cyan-500/50 drop-shadow-md">
       MASQUERADE PROTOCOL
     </span>
