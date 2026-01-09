@@ -302,6 +302,15 @@ const GameLogo = () => (
   </div>
 );
 
+const GameLogoBig = () => (
+  <div className="flex items-center justify-center gap-2 opacity-60 mt-auto pb-4 pt-2 relative z-10 pointer-events-none">
+    <Cpu size={20} className="text-cyan-500 animate-pulse" />
+    <span className="text-[20px] font-black tracking-[0.2em] text-cyan-500 uppercase font-mono shadow-cyan-500/50 drop-shadow-md">
+      MASQUERADE PROTOCOL
+    </span>
+  </div>
+);
+
 const ScanSelectionModal = ({ players, onSelect, onSkip }) => (
   <div className="fixed inset-0 bg-black/95 z-[190] flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
     <div className="bg-slate-900 border-2 border-blue-500/50 p-6 rounded-xl max-w-sm w-full shadow-[0_0_30px_rgba(59,130,246,0.3)] text-center relative">
@@ -384,10 +393,10 @@ const DiscardSelectionModal = ({ hand, limit, onConfirm, onCancel }) => {
 
   const toggleCard = (idx) => {
     if (selectedIndices.includes(idx)) {
-      setSelectedIndices(prev => prev.filter(i => i !== idx));
+      setSelectedIndices((prev) => prev.filter((i) => i !== idx));
     } else {
       if (selectedIndices.length < discardCountNeeded) {
-        setSelectedIndices(prev => [...prev, idx]);
+        setSelectedIndices((prev) => [...prev, idx]);
       }
     }
   };
@@ -402,7 +411,8 @@ const DiscardSelectionModal = ({ hand, limit, onConfirm, onCancel }) => {
           Hand limit exceeded ({hand.length}/{limit}).
         </p>
         <p className="text-white font-bold text-lg mb-6">
-          Select <span className="text-red-400">{discardCountNeeded}</span> data packet(s) to purge.
+          Select <span className="text-red-400">{discardCountNeeded}</span> data
+          packet(s) to purge.
         </p>
 
         <div className="flex justify-center flex-wrap gap-4 mb-8">
@@ -412,7 +422,11 @@ const DiscardSelectionModal = ({ hand, limit, onConfirm, onCancel }) => {
               <div
                 key={idx}
                 onClick={() => toggleCard(idx)}
-                className={`transition-all duration-200 cursor-pointer ${isSelected ? "scale-90 opacity-50 grayscale ring-2 ring-red-500 rounded-lg" : "hover:scale-105"}`}
+                className={`transition-all duration-200 cursor-pointer ${
+                  isSelected
+                    ? "scale-90 opacity-50 grayscale ring-2 ring-red-500 rounded-lg"
+                    : "hover:scale-105"
+                }`}
               >
                 <CardDisplay type={card} small />
                 {isSelected && (
@@ -1463,12 +1477,12 @@ export default function MasqueradeProtocol() {
       deck: [...gameState.deck],
       discardPile: [...gameState.discardPile],
       logs: [],
-      eventData: null
+      eventData: null,
     };
 
     const pIdx = sourceData.players.findIndex((p) => p.id === user.uid);
     const me = sourceData.players[pIdx];
-    
+
     // Sort indices descending to splice correctly
     selectedIndices.sort((a, b) => b - a);
 
@@ -1493,16 +1507,22 @@ export default function MasqueradeProtocol() {
 
     // Commit to database
     await nextTurn(
-      sourceData.players, 
-      sourceData.deck, 
-      sourceData.discardPile, 
-      sourceData.logs, 
+      sourceData.players,
+      sourceData.deck,
+      sourceData.discardPile,
+      sourceData.logs,
       sourceData.eventData
     );
   };
 
   // Helper to check limits before passing turn
-  const checkLimitAndFinalize = async (players, deck, discardPile, logs, eventData) => {
+  const checkLimitAndFinalize = async (
+    players,
+    deck,
+    discardPile,
+    logs,
+    eventData
+  ) => {
     const pIdx = gameState.players.findIndex((p) => p.id === user.uid);
     const me = players[pIdx]; // Use the 'players' passed in (the future state), not gameState
     const limit = me.avatar === "ADMIN" ? 7 : 5;
@@ -1514,7 +1534,7 @@ export default function MasqueradeProtocol() {
         deck,
         discardPile,
         logs,
-        eventData
+        eventData,
       });
       // 2. Open the modal
       setShowDiscardModal(true);
@@ -2063,12 +2083,14 @@ export default function MasqueradeProtocol() {
     const limit = me.avatar === "ADMIN" ? 7 : 5;
 
     // Prepare base data for a skip (no changes to hand yet)
-    const logs = [{
-      text: `${me.name} skipped their turn.`,
-      type: "neutral",
-      id: Date.now(),
-      viewerId: "all",
-    }];
+    const logs = [
+      {
+        text: `${me.name} skipped their turn.`,
+        type: "neutral",
+        id: Date.now(),
+        viewerId: "all",
+      },
+    ];
 
     // If Over Limit: Force Discard Logic
     if (me.hand.length > limit) {
@@ -2077,7 +2099,7 @@ export default function MasqueradeProtocol() {
         deck: [...gameState.deck],
         discardPile: [...gameState.discardPile],
         logs: logs,
-        eventData: null
+        eventData: null,
       });
       setShowDiscardModal(true);
       return;
@@ -2492,10 +2514,11 @@ export default function MasqueradeProtocol() {
     return (
       <div className="min-h-screen bg-slate-950 text-cyan-100 flex flex-col items-center justify-center p-6 relative font-mono">
         <FloatingBackground />
+        <GameLogoBig />
         <div className="z-10 w-full max-w-lg bg-slate-900/90 backdrop-blur p-8 rounded-lg border border-cyan-500/30 shadow-2xl">
           <div className="flex justify-between items-center mb-8 border-b border-slate-800 pb-4">
             <h2 className="text-xl font-bold text-cyan-500 flex items-center gap-2">
-              <Terminal size={20} /> LOBBY:{" "}
+              <Terminal size={20} /> Server_Room:{" "}
               <span className="text-white">{roomId}</span>
             </h2>
             <button
@@ -2669,11 +2692,16 @@ export default function MasqueradeProtocol() {
           <DiscardSelectionModal
             // LOGIC CHANGE: Look at pendingTurnData first
             hand={
-              pendingTurnData 
-                ? pendingTurnData.players.find(p => p.id === user.uid).hand
-                : gameState.players.find(p => p.id === user.uid).hand
+              pendingTurnData
+                ? pendingTurnData.players.find((p) => p.id === user.uid).hand
+                : gameState.players.find((p) => p.id === user.uid).hand
             }
-            limit={gameState.players.find(p => p.id === user.uid).avatar === "ADMIN" ? 7 : 5}
+            limit={
+              gameState.players.find((p) => p.id === user.uid).avatar ===
+              "ADMIN"
+                ? 7
+                : 5
+            }
             onConfirm={handleConfirmDiscard}
             onCancel={() => {}} // Disabling cancel is safer to force the discard
           />
