@@ -1495,7 +1495,7 @@ export default function MasqueradeProtocol() {
 
     // Add log
     sourceData.logs.push({
-      text: `${me.name} purged memory: ${discardedNames.join(", ")}.`,
+      text: `${me.name} purged memory.`,
       type: "neutral",
       id: Date.now(),
       viewerId: "all",
@@ -1825,7 +1825,7 @@ export default function MasqueradeProtocol() {
 
     // 5. Logs & Feedback
     logs.push({
-      text: `⚠️ GLITCH: ${me.name} Indexed ${target.name} and extracted a ${cardType}.`,
+      text: `⚠️ GLITCH: ${me.name} Indexed ${target.name} and extracted a card.`,
       type: "glitch",
       id: Date.now(),
       viewerId: "all",
@@ -1952,7 +1952,7 @@ export default function MasqueradeProtocol() {
         });
 
         logs.push({
-          text: `PING: ${target.name} has a ${revealedCard}.`,
+          text: `PING: ${target.name} was pinged.`,
           type: "warning",
           id: Date.now(),
           viewerId: "all",
@@ -2206,7 +2206,7 @@ export default function MasqueradeProtocol() {
       });
 
       logs.push({
-        text: `Firewall Purge: ${me.name} discarded ${virusCount} Viruses and drew ${drawn} new cards.`,
+        text: `Firewall Purge: ${me.name} discarded Virus/es and drew new card/s.`,
         type: "success",
         id: Date.now() + 1,
         viewerId: "all",
