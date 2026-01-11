@@ -312,7 +312,7 @@ const GameLogoBig = () => (
 );
 
 const ScanSelectionModal = ({ players, onSelect, onSkip }) => (
-  <div className="fixed inset-0 bg-black/95 z-[190] flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
+  <div className="fixed inset-0 bg-black/30 z-[190] flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
     <div className="bg-slate-900 border-2 border-blue-500/50 p-6 rounded-xl max-w-sm w-full shadow-[0_0_30px_rgba(59,130,246,0.3)] text-center relative">
       <h3 className="text-xl font-black text-blue-400 mb-4 uppercase tracking-widest flex items-center justify-center gap-2">
         <ScanEye size={24} /> Passive Scan
