@@ -2688,9 +2688,10 @@ export default function MasqueradeProtocol() {
           />
         )}
 
-        {showDiscardModal && (
+        {/* --- MODIFIED SECTION START --- */}
+        {/* Only show Discard Modal if the Action Queue is EMPTY */}
+        {showDiscardModal && actionQueue.length === 0 && (
           <DiscardSelectionModal
-            // LOGIC CHANGE: Look at pendingTurnData first
             hand={
               pendingTurnData
                 ? pendingTurnData.players.find((p) => p.id === user.uid).hand
@@ -2703,9 +2704,10 @@ export default function MasqueradeProtocol() {
                 : 5
             }
             onConfirm={handleConfirmDiscard}
-            onCancel={() => {}} // Disabling cancel is safer to force the discard
+            onCancel={() => {}} 
           />
         )}
+        {/* --- MODIFIED SECTION END --- */}
 
         {/* TOP BAR */}
         <div className="h-14 bg-slate-900/80 border-b border-slate-800 flex items-center justify-between px-4 z-50 backdrop-blur-md sticky top-0">
