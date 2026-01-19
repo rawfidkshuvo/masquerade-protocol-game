@@ -63,19 +63,19 @@ import {
 // CONFIGURATION
 // ---------------------------------------------------------------------------
 const firebaseConfig = {
-  apiKey: "AIzaSyBjIjK53vVJW1y5RaqEFGSFp0ECVDBEe1o",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: "game-hub-ff8aa.firebaseapp.com",
-  projectId: "game-hub-ff8aa",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: "game-hub-ff8aa.firebasestorage.app",
   messagingSenderId: "586559578902",
-  appId: "1:586559578902:web:9afd57573258c43a6aa637",
+  appId: "1:586559578902:web:9afd57573258c43a6aa637"
 };
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
 const APP_ID =
-  typeof __app_id !== "undefined" ? __app_id : "masquerade-protocol";
+  typeof __app_id !== "undefined" ? __app_id : "masquerade-protocol-game";
 const GAME_ID = "17";
 
 // ---------------------------------------------------------------------------
