@@ -865,7 +865,9 @@ const GuideModal = ({ onClose }) => (
 export default function MasqueradeProtocol() {
   const [user, setUser] = useState(null);
   const [view, setView] = useState("menu");
-  const [playerName, setPlayerName] = useState("");
+  const [playerName, setPlayerName] = useState(
+    () => localStorage.getItem("masquerade_playerName") || ""
+  );
   const [roomCode, setRoomCode] = useState("");
   // PERSISTENCE FIX: Load room ID from local storage
   const [roomId, setRoomId] = useState(
@@ -909,6 +911,10 @@ export default function MasqueradeProtocol() {
     const unsub = onAuthStateChanged(auth, setUser);
     return () => unsub();
   }, []);
+
+  useEffect(() => {
+    if (playerName) localStorage.setItem("masquerade_playerName", playerName);
+  }, [playerName]);
 
   // Helper to add action to queue
   const queueAction = (data) => {
