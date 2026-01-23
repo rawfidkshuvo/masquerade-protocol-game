@@ -865,9 +865,7 @@ const GuideModal = ({ onClose }) => (
 export default function MasqueradeProtocol() {
   const [user, setUser] = useState(null);
   const [view, setView] = useState("menu");
-  const [playerName, setPlayerName] = useState(
-    () => localStorage.getItem("masquerade_playerName") || ""
-  );
+  
   const [roomCode, setRoomCode] = useState("");
   // PERSISTENCE FIX: Load room ID from local storage
   const [roomId, setRoomId] = useState(
@@ -898,6 +896,15 @@ export default function MasqueradeProtocol() {
   const [showStealModal, setShowStealModal] = useState(false);
   const [stealTargetId, setStealTargetId] = useState(null);
 
+  //read and fill global name
+  const [playerName, setPlayerName] = useState(
+    () => localStorage.getItem("gameHub_playerName") || ""
+  );
+  //set global name for all game
+  useEffect(() => {
+    if (playerName) localStorage.setItem("gameHub_playerName", playerName);
+  }, [playerName]);
+
   // --- AUTH ---
   useEffect(() => {
     const initAuth = async () => {
@@ -912,9 +919,7 @@ export default function MasqueradeProtocol() {
     return () => unsub();
   }, []);
 
-  useEffect(() => {
-    if (playerName) localStorage.setItem("masquerade_playerName", playerName);
-  }, [playerName]);
+  
 
   // Helper to add action to queue
   const queueAction = (data) => {
