@@ -2479,7 +2479,7 @@ export default function MasqueradeProtocol() {
         <div className="z-10 text-center mb-10 animate-in fade-in zoom-in duration-700">
           <Cpu
             size={64}
-            className="text-cyan-500 mx-auto mb-4 animate-pulse drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]"
+            className="text-cyan-500 mx-auto mb-4 animate-bounce drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]"
           />
           <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-cyan-400 to-blue-600 tracking-widest drop-shadow-md">
             MASQUERADE
