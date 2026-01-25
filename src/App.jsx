@@ -284,7 +284,7 @@ const FloatingBackground = ({ isShaking }) => (
       isShaking ? "animate-shake bg-red-900/20" : ""
     }`}
   >
-    <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-yellow-900/20 via-gray-950 to-black" />
+    <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-yellow-900/20 via-gray-950 to-black" />
     <div className="absolute top-0 left-0 w-full h-full opacity-10">
       {[...Array(20)].map((_, i) => {
         const fruitKeys = Object.keys(PACKETS);
@@ -292,7 +292,7 @@ const FloatingBackground = ({ isShaking }) => (
         return (
           <div
             key={i}
-            className="absolute animate-float text-white/20"
+            className="absolute animate-float text-white/60"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
@@ -341,7 +341,7 @@ const GameLogoBig = () => (
 );
 
 const ScanSelectionModal = ({ players, onSelect, onSkip }) => (
-  <div className="fixed inset-0 bg-black/30 z-[190] flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
+  <div className="fixed inset-0 bg-black/30 z-190 flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
     <div className="bg-slate-900 border-2 border-blue-500/50 p-6 rounded-xl max-w-sm w-full shadow-[0_0_30px_rgba(59,130,246,0.3)] text-center relative">
       <h3 className="text-xl font-black text-blue-400 mb-4 uppercase tracking-widest flex items-center justify-center gap-2">
         <ScanEye size={24} /> Passive Scan
@@ -379,7 +379,7 @@ const ScanSelectionModal = ({ players, onSelect, onSkip }) => (
 );
 
 const StealSelectionModal = ({ targetPlayer, onSelect, onCancel }) => (
-  <div className="fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
+  <div className="fixed inset-0 bg-black/95 z-200 flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
     <div className="bg-slate-900 border-2 border-fuchsia-500 p-6 rounded-xl max-w-lg w-full shadow-[0_0_30px_rgba(217,70,239,0.3)] text-center relative">
       <h3 className="text-xl font-black text-fuchsia-400 mb-2 uppercase tracking-widest flex items-center justify-center gap-2">
         <Database size={24} /> INDEX & EXTRACT
@@ -431,7 +431,7 @@ const DiscardSelectionModal = ({ hand, limit, onConfirm, onCancel }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
+    <div className="fixed inset-0 bg-black/95 z-200 flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
       <div className="bg-slate-900 border-2 border-red-500/50 p-6 rounded-xl max-w-lg w-full shadow-[0_0_30px_rgba(220,38,38,0.3)] text-center relative">
         <h3 className="text-xl font-black text-red-400 mb-2 uppercase tracking-widest flex items-center justify-center gap-2">
           <AlertTriangle size={24} /> Memory Overflow
@@ -496,7 +496,7 @@ const RoleInfoModal = ({ item, onClose, onActivateGlitch, canGlitch }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/90 z-[170] flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200"
+      className="fixed inset-0 bg-black/90 z-170 flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200"
       onClick={onClose}
     >
       <div
@@ -583,7 +583,7 @@ const RoleInfoModal = ({ item, onClose, onActivateGlitch, canGlitch }) => {
 const ActionResultModal = ({ data, onClose }) => {
   if (!data) return null;
   return (
-    <div className="fixed inset-0 bg-black/95 z-[180] flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
+    <div className="fixed inset-0 bg-black/95 z-180 flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
       <div className="bg-slate-900 border-2 border-yellow-500/50 p-6 rounded-xl max-w-sm w-full shadow-[0_0_30px_rgba(234,179,8,0.3)] text-center relative">
         <button
           onClick={onClose}
@@ -625,7 +625,7 @@ const ActionResultModal = ({ data, onClose }) => {
 };
 
 const FeedbackOverlay = ({ type, message, subtext, icon: Icon }) => (
-  <div className="fixed inset-0 z-[160] flex items-center justify-center pointer-events-none animate-in fade-in zoom-in duration-300">
+  <div className="fixed inset-0 z-160 flex items-center justify-center pointer-events-none animate-in fade-in zoom-in duration-300">
     <div
       className={`
       flex flex-col items-center justify-center p-8 md:p-12 rounded-3xl border-4 shadow-[0_0_50px_rgba(0,0,0,0.5)] backdrop-blur-xl relative overflow-hidden
@@ -718,7 +718,7 @@ const CardDisplay = ({ type, onClick, disabled, highlight, small, tiny }) => {
 };
 
 const GuideModal = ({ onClose }) => (
-  <div className="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center p-4">
+  <div className="fixed inset-0 bg-black/95 z-100 flex items-center justify-center p-4">
     <div className="bg-slate-900 border border-cyan-500/30 rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col shadow-[0_0_50px_rgba(6,182,212,0.2)] overflow-hidden font-mono">
       {/* Header */}
       <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-950">
@@ -2481,7 +2481,7 @@ export default function MasqueradeProtocol() {
             size={64}
             className="text-cyan-500 mx-auto mb-4 animate-bounce drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]"
           />
-          <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-cyan-400 to-blue-600 tracking-widest drop-shadow-md">
+          <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-linear-to-b from-cyan-400 to-blue-600 tracking-widest drop-shadow-md">
             MASQUERADE
             <br />
             PROTOCOL
@@ -2932,7 +2932,7 @@ export default function MasqueradeProtocol() {
                       size={64}
                       className="text-yellow-400 mx-auto mb-4 animate-bounce"
                     />
-                    <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600 mb-2">
+                    <h2 className="text-4xl font-black text-transparent bg-clip-text bg-linear-to-r from-yellow-300 to-yellow-600 mb-2">
                       GRAND CHAMPION
                     </h2>
                     <div className="text-2xl text-white mb-6">
@@ -3277,7 +3277,7 @@ export default function MasqueradeProtocol() {
 
         {/* LOGS MODAL */}
         {showLogs && (
-          <div className="fixed top-16 right-4 w-64 max-h-60 bg-gray-900/95 border border-gray-700 rounded-xl z-[155] overflow-y-auto p-2 shadow-2xl">
+          <div className="fixed top-16 right-4 w-64 max-h-60 bg-gray-900/95 border border-gray-700 rounded-xl z-155 overflow-y-auto p-2 shadow-2xl">
             <div className="bg-slate-900 rounded-lg w-full max-w-md h-[60vh] flex flex-col border border-slate-700">
               <div className="p-4 border-b border-slate-800 flex justify-between">
                 <h3 className="text-white font-bold">System Logs</h3>
@@ -3314,7 +3314,7 @@ export default function MasqueradeProtocol() {
         )}
 
         {showLeaveConfirm && (
-          <div className="fixed inset-0 bg-black/90 z-[200] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/90 z-200 flex items-center justify-center p-4">
             <div className="bg-slate-900 rounded border border-slate-700 p-6 text-center">
               <h3 className="text-white font-bold mb-4">
                 Disconnect from Server?
