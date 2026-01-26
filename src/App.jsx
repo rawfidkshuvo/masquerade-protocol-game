@@ -1284,6 +1284,9 @@ export default function MasqueradeProtocol() {
       };
     });
 
+    // --- LOGIC CHANGE: Calculate Random Start Index ---
+    const randomStartIndex = Math.floor(Math.random() * players.length);
+
     await updateDoc(
       doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
       {
@@ -1291,7 +1294,7 @@ export default function MasqueradeProtocol() {
         players,
         deck,
         discardPile: [],
-        turnIndex: 0,
+        turnIndex: randomStartIndex, // Changed from 0
         crashCount: 0,
         logs: [
           {
@@ -1373,6 +1376,21 @@ export default function MasqueradeProtocol() {
   const startNextRound = async () => {
     if (gameState.hostId !== user.uid) return;
 
+    // --- LOGIC CHANGE: Find the previous winner's index ---
+    const previousWinnerId = gameState.winnerId;
+    let nextTurnIndex = 0;
+
+    if (previousWinnerId) {
+      nextTurnIndex = gameState.players.findIndex((p) => p.id === previousWinnerId);
+      // Safety fallback: if player left or ID not found, pick random
+      if (nextTurnIndex === -1) {
+        nextTurnIndex = Math.floor(Math.random() * gameState.players.length);
+      }
+    } else {
+      // Fallback if no winner ID exists
+      nextTurnIndex = Math.floor(Math.random() * gameState.players.length);
+    }
+
     // 1. Prepare new game state
     const avatarKeys = shuffle(Object.keys(AVATARS));
     const directiveKeys = shuffle(Object.keys(DIRECTIVES));
@@ -1422,7 +1440,7 @@ export default function MasqueradeProtocol() {
         players,
         deck,
         discardPile: [],
-        turnIndex: 0,
+        turnIndex: nextTurnIndex, // Set to the winner's index
         crashCount: 0,
         winnerId: null,
         roundCount: increment(1),
