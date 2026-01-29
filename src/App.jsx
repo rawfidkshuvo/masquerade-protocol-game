@@ -57,6 +57,7 @@ import {
   Award,
   PlayCircle,
   SkipForward,
+  Copy,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -68,7 +69,7 @@ const firebaseConfig = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -633,10 +634,10 @@ const FeedbackOverlay = ({ type, message, subtext, icon: Icon }) => (
         type === "glitch"
           ? "bg-fuchsia-900/80 border-fuchsia-500 text-fuchsia-100"
           : type === "success"
-          ? "bg-green-900/80 border-green-500 text-green-100"
-          : type === "failure"
-          ? "bg-red-900/80 border-red-500 text-red-100"
-          : "bg-cyan-900/80 border-cyan-500 text-cyan-100"
+            ? "bg-green-900/80 border-green-500 text-green-100"
+            : type === "failure"
+              ? "bg-red-900/80 border-red-500 text-red-100"
+              : "bg-cyan-900/80 border-cyan-500 text-cyan-100"
       }
     `}
     >
@@ -696,7 +697,7 @@ const CardDisplay = ({ type, onClick, disabled, highlight, small, tiny }) => {
         <div
           className={`w-2 h-2 rounded-full ${info.color.replace(
             "text",
-            "bg"
+            "bg",
           )} ml-auto`}
         ></div>
       </div>
@@ -894,11 +895,11 @@ const GuideModal = ({ onClose }) => (
 export default function MasqueradeProtocol() {
   const [user, setUser] = useState(null);
   const [view, setView] = useState("menu");
-  
+
   const [roomCode, setRoomCode] = useState("");
   // PERSISTENCE FIX: Load room ID from local storage
   const [roomId, setRoomId] = useState(
-    localStorage.getItem("masquerade_room_id") || ""
+    localStorage.getItem("masquerade_room_id") || "",
   );
   const [gameState, setGameState] = useState(null);
   const [error, setError] = useState("");
@@ -927,7 +928,7 @@ export default function MasqueradeProtocol() {
 
   //read and fill global name
   const [playerName, setPlayerName] = useState(
-    () => localStorage.getItem("gameHub_playerName") || ""
+    () => localStorage.getItem("gameHub_playerName") || "",
   );
   //set global name for all game
   useEffect(() => {
@@ -947,8 +948,6 @@ export default function MasqueradeProtocol() {
     const unsub = onAuthStateChanged(auth, setUser);
     return () => unsub();
   }, []);
-
-  
 
   // Helper to add action to queue
   const queueAction = (data) => {
@@ -1063,7 +1062,7 @@ export default function MasqueradeProtocol() {
                   ...event.payload.discards.map((c) => ({
                     type: c,
                     label: "Purged",
-                  }))
+                  })),
                 );
               }
 
@@ -1077,7 +1076,7 @@ export default function MasqueradeProtocol() {
           localStorage.removeItem("masquerade_room_id");
           setError("Connection Terminated (Room Closed).");
         }
-      }
+      },
     );
     return () => unsub();
   }, [roomId, user]);
@@ -1160,7 +1159,7 @@ export default function MasqueradeProtocol() {
     };
     await setDoc(
       doc(db, "artifacts", APP_ID, "public", "data", "rooms", newId),
-      initialData
+      initialData,
     );
     setRoomId(newId);
     localStorage.setItem("masquerade_room_id", newId); // Persist
@@ -1177,7 +1176,7 @@ export default function MasqueradeProtocol() {
       "public",
       "data",
       "rooms",
-      roomCode
+      roomCode,
     );
     const snap = await getDoc(ref);
     if (!snap.exists()) {
@@ -1239,6 +1238,21 @@ export default function MasqueradeProtocol() {
         viewerId: "all",
       }),
     });
+  };
+
+  const copyToClipboard = () => {
+    try {
+      navigator.clipboard.writeText(roomId);
+      triggerFeedback("neutral", "COPIED!", "", CheckCircle);
+    } catch (e) {
+      const el = document.createElement("textarea");
+      el.value = roomId;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+      triggerFeedback("neutral", "COPIED!", "", CheckCircle);
+    }
   };
 
   const startGame = async () => {
@@ -1306,7 +1320,7 @@ export default function MasqueradeProtocol() {
             viewerId: "all",
           },
         ],
-      }
+      },
     );
   };
 
@@ -1367,7 +1381,7 @@ export default function MasqueradeProtocol() {
         lastEvent: null,
         crashCount: 0,
         roundCount: 1, // Reset Round
-      }
+      },
     );
     setShowLeaveConfirm(false);
   };
@@ -1381,7 +1395,9 @@ export default function MasqueradeProtocol() {
     let nextTurnIndex = 0;
 
     if (previousWinnerId) {
-      nextTurnIndex = gameState.players.findIndex((p) => p.id === previousWinnerId);
+      nextTurnIndex = gameState.players.findIndex(
+        (p) => p.id === previousWinnerId,
+      );
       // Safety fallback: if player left or ID not found, pick random
       if (nextTurnIndex === -1) {
         nextTurnIndex = Math.floor(Math.random() * gameState.players.length);
@@ -1454,7 +1470,7 @@ export default function MasqueradeProtocol() {
             viewerId: "all",
           },
         ],
-      }
+      },
     );
   };
 
@@ -1501,7 +1517,7 @@ export default function MasqueradeProtocol() {
         // FIXED LOGIC: 2 other players must have 2+ Viruses
         const criticalPlayers = living.filter(
           (pl) =>
-            pl.id !== p.id && pl.hand.filter((c) => c === "VIRUS").length >= 2
+            pl.id !== p.id && pl.hand.filter((c) => c === "VIRUS").length >= 2,
         );
         if (criticalPlayers.length >= 2) won = true;
       } else if (d === "SABOTEUR") {
@@ -1569,7 +1585,7 @@ export default function MasqueradeProtocol() {
       sourceData.deck,
       sourceData.discardPile,
       sourceData.logs,
-      sourceData.eventData
+      sourceData.eventData,
     );
   };
 
@@ -1579,7 +1595,7 @@ export default function MasqueradeProtocol() {
     deck,
     discardPile,
     logs,
-    eventData
+    eventData,
   ) => {
     const pIdx = gameState.players.findIndex((p) => p.id === user.uid);
     const me = players[pIdx]; // Use the 'players' passed in (the future state), not gameState
@@ -1607,7 +1623,7 @@ export default function MasqueradeProtocol() {
     deck,
     discardPile,
     logs,
-    eventData = null
+    eventData = null,
   ) => {
     // 1. Current Player Hand Limit Check (Discard Phase)
     // const currentP = updatedPlayers[gameState.turnIndex];
@@ -1671,7 +1687,7 @@ export default function MasqueradeProtocol() {
 
       await updateDoc(
         doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
-        updates
+        updates,
       );
       return;
     }
@@ -1733,7 +1749,7 @@ export default function MasqueradeProtocol() {
       const crashedCount = processVirusOverload(
         updatedPlayers,
         discardPile,
-        logs
+        logs,
       );
       globalCrashAccumulator += crashedCount;
 
@@ -1755,7 +1771,7 @@ export default function MasqueradeProtocol() {
     winnerId = await checkWinConditions(
       updatedPlayers,
       logs,
-      globalCrashAccumulator
+      globalCrashAccumulator,
     );
     if (winnerId) {
       const winnerIdx = updatedPlayers.findIndex((p) => p.id === winnerId);
@@ -1783,7 +1799,7 @@ export default function MasqueradeProtocol() {
 
       await updateDoc(
         doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
-        updates
+        updates,
       );
       return;
     }
@@ -1807,7 +1823,7 @@ export default function MasqueradeProtocol() {
 
     await updateDoc(
       doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
-      updates
+      updates,
     );
   };
 
@@ -1893,7 +1909,7 @@ export default function MasqueradeProtocol() {
       "glitch",
       "DOWNLOAD COMPLETE",
       `Acquired ${cardType}`,
-      Search
+      Search,
     );
 
     // 6. Check Win Conditions & Save (Standard Next Turn Logic)
@@ -1926,7 +1942,7 @@ export default function MasqueradeProtocol() {
       };
       await updateDoc(
         doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
-        updates
+        updates,
       );
       return;
     }
@@ -1934,7 +1950,7 @@ export default function MasqueradeProtocol() {
     if (crashedCount > 0) {
       await updateDoc(
         doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
-        { crashCount: increment(crashedCount) }
+        { crashCount: increment(crashedCount) },
       );
     }
 
@@ -2112,7 +2128,7 @@ export default function MasqueradeProtocol() {
 
       await updateDoc(
         doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
-        updates
+        updates,
       );
       return;
     }
@@ -2121,7 +2137,7 @@ export default function MasqueradeProtocol() {
     if (crashedCount > 0) {
       await updateDoc(
         doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
-        { crashCount: increment(crashedCount) }
+        { crashCount: increment(crashedCount) },
       );
     }
 
@@ -2168,7 +2184,7 @@ export default function MasqueradeProtocol() {
       gameState.players,
       gameState.deck,
       gameState.discardPile,
-      logs
+      logs,
     );
   };
 
@@ -2182,7 +2198,7 @@ export default function MasqueradeProtocol() {
         "failure",
         "ACCESS DENIED",
         "Wait for your processing cycle (Turn).",
-        Lock
+        Lock,
       );
       return;
     }
@@ -2198,7 +2214,7 @@ export default function MasqueradeProtocol() {
           "failure",
           "TARGET IMMUNE",
           "Ghost Process blocks Glitch effects.",
-          Shield
+          Shield,
         );
         return;
       }
@@ -2439,7 +2455,7 @@ export default function MasqueradeProtocol() {
 
       await updateDoc(
         doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
-        updates
+        updates,
       );
       return;
     }
@@ -2448,7 +2464,7 @@ export default function MasqueradeProtocol() {
     if (crashedCount > 0) {
       await updateDoc(
         doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
-        { crashCount: increment(crashedCount) }
+        { crashCount: increment(crashedCount) },
       );
     }
 
@@ -2575,10 +2591,20 @@ export default function MasqueradeProtocol() {
         <GameLogoBig />
         <div className="z-10 w-full max-w-lg bg-slate-900/90 backdrop-blur p-8 rounded-lg border border-cyan-500/30 shadow-2xl">
           <div className="flex justify-between items-center mb-8 border-b border-slate-800 pb-4">
-            <h2 className="text-xl font-bold text-cyan-500 flex items-center gap-2">
-              <Terminal size={20} /> Server_Room:{" "}
-              <span className="text-white">{roomId}</span>
-            </h2>
+            {/* Grouping Title and Copy Button together on the left */}
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-bold text-cyan-500 flex items-center gap-2">
+                <Terminal size={20} /> Server_Room:{" "}
+                <span className="text-white font-mono">{roomId}</span>
+              </h2>
+              <button
+                onClick={copyToClipboard}
+                className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white"
+                title="Copy Room ID"
+              >
+                <Copy size={16} />
+              </button>
+            </div>
             <button
               onClick={handleLeave}
               className="p-2 hover:bg-red-900/30 rounded text-red-400"
@@ -2727,7 +2753,7 @@ export default function MasqueradeProtocol() {
         {showScanSelection && (
           <ScanSelectionModal
             players={gameState.players.filter(
-              (p) => p.id !== user.uid && !p.isEliminated
+              (p) => p.id !== user.uid && !p.isEliminated,
             )}
             onSelect={(targetId) => handlePassiveScan(targetId)}
             onSkip={() => handlePassiveScan(null)}
@@ -2762,7 +2788,7 @@ export default function MasqueradeProtocol() {
                 : 5
             }
             onConfirm={handleConfirmDiscard}
-            onCancel={() => {}} 
+            onCancel={() => {}}
           />
         )}
         {/* --- MODIFIED SECTION END --- */}
@@ -3031,7 +3057,7 @@ export default function MasqueradeProtocol() {
               <div className="w-full max-w-md space-y-2 pointer-events-none">
                 {gameState.logs
                   .filter(
-                    (l) => l.viewerId === "all" || l.viewerId === user.uid
+                    (l) => l.viewerId === "all" || l.viewerId === user.uid,
                   )
                   .slice(-3)
                   .reverse()
@@ -3042,8 +3068,8 @@ export default function MasqueradeProtocol() {
                         l.type === "danger"
                           ? "border-red-500 bg-red-900/10 text-red-300"
                           : l.type === "glitch"
-                          ? "border-fuchsia-500 bg-fuchsia-900/10 text-fuchsia-300"
-                          : "border-slate-600 text-slate-400"
+                            ? "border-fuchsia-500 bg-fuchsia-900/10 text-fuchsia-300"
+                            : "border-slate-600 text-slate-400"
                       }`}
                       style={{ opacity: 1 - i * 0.3 }}
                     >
@@ -3306,7 +3332,7 @@ export default function MasqueradeProtocol() {
               <div className="flex-1 overflow-y-auto p-4 space-y-2 font-mono text-xs">
                 {[...gameState.logs]
                   .filter(
-                    (l) => l.viewerId === "all" || l.viewerId === user.uid
+                    (l) => l.viewerId === "all" || l.viewerId === user.uid,
                   )
                   .reverse()
                   .map((l) => (
@@ -3316,8 +3342,8 @@ export default function MasqueradeProtocol() {
                         l.type === "danger"
                           ? "border-red-500 bg-red-900/10 text-red-300"
                           : l.type === "glitch"
-                          ? "border-fuchsia-500 bg-fuchsia-900/10 text-fuchsia-300"
-                          : "border-slate-600 text-slate-400"
+                            ? "border-fuchsia-500 bg-fuchsia-900/10 text-fuchsia-300"
+                            : "border-slate-600 text-slate-400"
                       }`}
                     >
                       <span className="opacity-50 mr-2">
