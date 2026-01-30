@@ -2552,7 +2552,7 @@ export default function MasqueradeProtocol() {
         <FloatingBackground />
         {showGuide && <GuideModal onClose={() => setShowGuide(false)} />}
 
-        <div className="z-10 text-center mb-10 animate-in fade-in zoom-in duration-700">
+        <div className="z-10 text-center mb-10">
           <Cpu
             size={64}
             className="text-cyan-500 mx-auto mb-4 animate-bounce drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]"
@@ -2669,7 +2669,7 @@ export default function MasqueradeProtocol() {
               </div>
             </div>
             <button
-              onClick={handleLeave}
+              onClick={() => setShowLeaveConfirm(true)}
               className="p-2 hover:bg-red-900/30 rounded text-red-400"
             >
               <LogOut size={16} />
@@ -2744,6 +2744,35 @@ export default function MasqueradeProtocol() {
             </div>
           )}
         </div>
+        {/* Add this inside the Lobby return block, near the bottom */}
+        {showLeaveConfirm && (
+          <div className="fixed inset-0 bg-black/90 z-200 flex items-center justify-center p-4">
+            <div className="bg-slate-900 rounded border border-slate-700 p-6 text-center max-w-sm w-full shadow-2xl">
+              <h3 className="text-white font-bold mb-4 text-lg">
+                Terminate Connection?
+              </h3>
+              <p className="text-slate-400 text-sm mb-6">
+                {isHost
+                  ? "As host, leaving will close the server for everyone."
+                  : "You will be removed from this session."}
+              </p>
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={() => setShowLeaveConfirm(false)}
+                  className="bg-slate-700 hover:bg-slate-600 px-6 py-2 rounded text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleLeave}
+                  className="bg-red-600 hover:bg-red-500 px-6 py-2 rounded text-white font-bold transition-colors"
+                >
+                  Disconnect
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <GameLogo />
       </div>
     );
