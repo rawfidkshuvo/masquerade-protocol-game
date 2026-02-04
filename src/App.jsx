@@ -139,9 +139,9 @@ const AVATARS = {
     id: "ADMIN",
     name: "Sys Admin",
     icon: Terminal,
-    color: "text-red-500",
-    bg: "bg-red-950/50",
-    border: "border-red-600",
+    color: "text-yellow-400",
+    bg: "bg-yellow-950/50",
+    border: "border-yellow-600",
     passive: "Hand Limit increased by 2.",
     glitch: "Sudo: Force target player to discard 2 random cards.",
   },
@@ -165,19 +165,19 @@ const DIRECTIVES = {
     icon: Bug,
     color: "text-lime-400",
   },
-  ANARCHIST: {
-    id: "ANARCHIST",
-    name: "The Anarchist",
-    // CHANGED: Requirement increased to "2 Viruses" per victim
-    desc: "Win if 1 other player (in 3 players game) or 2 other players (in 4+ players game) are CRITICAL (2+ VIRUS cards).",
-    icon: AlertTriangle,
-    color: "text-yellow-400",
-  },
+  // ANARCHIST: {
+  //   id: "ANARCHIST",
+  //   name: "The Anarchist",
+  //   // CHANGED: Requirement increased to "2 Viruses" per victim
+  //   desc: "Win if 1 other player (in 3 players game) or 2 other players (in 4+ players game) are CRITICAL (2+ VIRUS cards).",
+  //   icon: AlertTriangle,
+  //   color: "text-yellow-400",
+  // },
   SURVIVOR: {
     // CHANGED: Lower threshold. In small games, 2 crashes usually ends the game anyway.
     id: "SURVIVOR",
     name: "The Survivor",
-    desc: "Win if you survive 1 Crash or be the last player standing.",
+    desc: "Win if you survive 1 Crash. (Anyone crashes first, you win.)",
     icon: Shield,
     color: "text-orange-400",
   },
@@ -1290,7 +1290,7 @@ export default function MasqueradeProtocol() {
       // SAFETY LOOP: Keep redrawing until hand has < 3 Viruses
       while (!validHand) {
         // Draw 3 cards
-        hand = [deck.pop(), deck.pop(), deck.pop()];
+        hand = [deck.pop(), deck.pop()];
 
         const virusCount = hand.filter((c) => c === "VIRUS").length;
 
@@ -1317,8 +1317,20 @@ export default function MasqueradeProtocol() {
       };
     });
 
-    // --- LOGIC CHANGE: Calculate Random Start Index ---
+    // 2. Pick First Player
     const randomStartIndex = Math.floor(Math.random() * players.length);
+    const firstPlayer = players[randomStartIndex];
+
+    // 3. FORCE DRAW FOR FIRST PLAYER
+    // (This simulates the draw they would normally get at the start of a turn)
+    let drawCount = 1;
+    if (firstPlayer.avatar === "MINER") drawCount = 2; // Miner passive
+
+    for (let i = 0; i < drawCount; i++) {
+      if (deck.length > 0) {
+        firstPlayer.hand.push(deck.pop());
+      }
+    }
 
     await updateDoc(
       doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
@@ -1409,42 +1421,36 @@ export default function MasqueradeProtocol() {
   const startNextRound = async () => {
     if (gameState.hostId !== user.uid) return;
 
-    // --- LOGIC CHANGE: Find the previous winner's index ---
     const previousWinnerId = gameState.winnerId;
     let nextTurnIndex = 0;
 
+    // Determine who starts
     if (previousWinnerId) {
       nextTurnIndex = gameState.players.findIndex(
         (p) => p.id === previousWinnerId,
       );
-      // Safety fallback: if player left or ID not found, pick random
       if (nextTurnIndex === -1) {
         nextTurnIndex = Math.floor(Math.random() * gameState.players.length);
       }
     } else {
-      // Fallback if no winner ID exists
       nextTurnIndex = Math.floor(Math.random() * gameState.players.length);
     }
 
-    // 1. Prepare new game state
     const avatarKeys = shuffle(Object.keys(AVATARS));
     const directiveKeys = shuffle(Object.keys(DIRECTIVES));
     let deck = shuffle([...DECK_TEMPLATE]);
 
-    // 2. Map players (Keep IDs, Names, Chips; Reset everything else)
     const players = gameState.players.map((p, i) => {
       let hand = [];
       let validHand = false;
 
-      // SAFETY LOOP: Keep redrawing until hand has < 3 Viruses
+      // 1. Initial Deal: 2 Cards
       while (!validHand) {
-        hand = [deck.pop(), deck.pop(), deck.pop()];
+        hand = [deck.pop(), deck.pop()]; // Start with 2
         const virusCount = hand.filter((c) => c === "VIRUS").length;
-
         if (virusCount < 2) {
           validHand = true;
         } else {
-          // Bad hand! Return to bottom and shuffle
           deck.push(...hand);
           deck = shuffle(deck);
           hand = [];
@@ -1463,11 +1469,20 @@ export default function MasqueradeProtocol() {
         isEliminated: false,
         revealed: false,
         glitchUsed: false,
-        // chips are preserved
       };
     });
 
-    // 3. Update Firestore
+    // 2. FORCE DRAW FOR STARTING PLAYER
+    const startPlayer = players[nextTurnIndex];
+    let drawCount = 1;
+    if (startPlayer.avatar === "MINER") drawCount = 2;
+
+    for (let i = 0; i < drawCount; i++) {
+      if (deck.length > 0) {
+        startPlayer.hand.push(deck.pop());
+      }
+    }
+
     await updateDoc(
       doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
       {
@@ -1475,15 +1490,13 @@ export default function MasqueradeProtocol() {
         players,
         deck,
         discardPile: [],
-        turnIndex: nextTurnIndex, // Set to the winner's index
+        turnIndex: nextTurnIndex,
         crashCount: 0,
         winnerId: null,
         roundCount: increment(1),
         logs: [
           {
-            text: `Round ${
-              gameState.roundCount + 1
-            } Initialized. Safety protocols active.`,
+            text: `Round ${gameState.roundCount + 1} Initialized. First Player: ${startPlayer.name}`,
             type: "neutral",
             id: Date.now(),
             viewerId: "all",
@@ -1532,16 +1545,18 @@ export default function MasqueradeProtocol() {
         if (h.filter((c) => c === "INTEL").length >= 5) won = true;
       } else if (d === "CORRUPTOR") {
         if (h.filter((c) => c === "VIRUS").length >= 4) won = true;
-      } else if (d === "ANARCHIST") {
-        // SCALING:
-        // 3 Players: Needs 1 other player to be Critical.
-        // 4-6 Players: Needs 2 other players to be Critical.
-        const threshold = players.length <= 3 ? 1 : 2;
-        const criticalPlayers = living.filter(
-          (pl) =>
-            pl.id !== p.id && pl.hand.filter((c) => c === "VIRUS").length >= 2,
-        );
-        if (criticalPlayers.length >= threshold) won = true;
+
+        // } else if (d === "ANARCHIST") {
+        //   // SCALING:
+        //   // 3 Players: Needs 1 other player to be Critical.
+        //   // 4-6 Players: Needs 2 other players to be Critical.
+        //   const threshold = players.length <= 3 ? 1 : 2;
+        //   const criticalPlayers = living.filter(
+        //     (pl) =>
+        //       pl.id !== p.id && pl.hand.filter((c) => c === "VIRUS").length >= 2,
+        //   );
+        //   if (criticalPlayers.length >= threshold) won = true;
+        // }
       } else if (d === "SABOTEUR") {
         if (
           h.includes("INTEL") &&
@@ -2930,7 +2945,7 @@ export default function MasqueradeProtocol() {
         {/* MAIN AREA */}
         <div className="flex-1 flex flex-col p-4 max-w-6xl mx-auto w-full relative z-10">
           {/* OPPONENTS */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div className="grid grid-cols-3 md:grid-cols-4 gap-3 mb-4">
             {gameState.players.map((p, i) => {
               if (p.id === user.uid) return null;
               const isActive = gameState.turnIndex === i;
@@ -3033,7 +3048,7 @@ export default function MasqueradeProtocol() {
                       className={`w-8 h-8 rounded flex items-center justify-center border cursor-pointer hover:scale-110 transition-transform ${
                         // FIX 2: Change border color if revealed OR game is finished
                         p.revealed || gameState.status === "finished"
-                          ? "border-red-500 bg-red-950"
+                          ? "border-red-500 bg-red-900/40 animate-pulse"
                           : "border-slate-700 bg-slate-800"
                       }`}
                     >
@@ -3041,6 +3056,8 @@ export default function MasqueradeProtocol() {
                       {p.revealed || gameState.status === "finished" ? (
                         React.createElement(DIRECTIVES[p.directive].icon, {
                           size: 16,
+                          // CHANGE HERE: Use the specific color from data
+                          //className: DIRECTIVES[p.directive].color,
                           className: "text-red-400",
                         })
                       ) : (
@@ -3178,8 +3195,43 @@ export default function MasqueradeProtocol() {
 
           {/* PLAYER DASHBOARD */}
           <div className="mt-auto bg-slate-900/90 border-t border-cyan-900/30 p-4 -mx-4 md:rounded-t-2xl md:mx-0 backdrop-blur-md relative z-20">
+            {/* --- STATUS & USER HEADER (Top-Left of Hand Area) --- */}
+            <div className="absolute top-3 left-4 right-4 flex items-center justify-between pointer-events-none z-30">
+              {/* Left Side: System Status */}
+              <div className="flex items-center gap-2">
+                <div className="relative flex h-2 w-2">
+                  {isMyTurn ? (
+                    <>
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                    </>
+                  ) : (
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-700"></span>
+                  )}
+                </div>
+                <span
+                  className={`text-[9px] font-black tracking-[0.2em] uppercase font-mono ${
+                    isMyTurn ? "text-green-400 animate-pulse" : "text-slate-600"
+                  }`}
+                >
+                  {isMyTurn
+                    ? "ONLINE : AWAITING_INPUT"
+                    : "OFFLINE : SYSTEM_IDLE"}
+                </span>
+              </div>
+
+              {/* Right Side: User Identity */}
+              <div className="flex items-center gap-2 px-2 py-1 bg-black/20 rounded-full border border-white/5 backdrop-blur-sm">
+                <span className="text-[9px] font-bold text-slate-400 font-mono tracking-wider uppercase">
+                  {playerName || "GUEST_USER"}
+                </span>
+                <div className="p-1 bg-slate-800 rounded-full border border-slate-700">
+                  <User size={10} className="text-cyan-500" />
+                </div>
+              </div>
+            </div>
             {/* Identity Bar */}
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-4 pt-8">
               <div className="flex items-center gap-4">
                 {/* My Avatar */}
                 <div
@@ -3224,9 +3276,13 @@ export default function MasqueradeProtocol() {
                     setInspectingItem(DIRECTIVES[me.directive]);
                   }}
                   className={`
-                    flex items-center gap-3 p-2 rounded border border-slate-700 bg-slate-800 relative cursor-pointer hover:bg-slate-700
-                    ${me.revealed ? "border-red-500 bg-red-900/20" : ""}
-                  `}
+    flex items-center gap-3 p-2 rounded border relative cursor-pointer transition-colors
+    ${
+      me.revealed
+        ? "bg-red-900/40 border-red-500 hover:bg-red-900/60" // Red background/border when revealed
+        : "bg-slate-800 border-slate-700 hover:bg-slate-700" // Standard dark background otherwise
+    }
+  `}
                 >
                   {/* --- NEW: PROGRESS COUNTERS --- */}
                   {me.directive === "HACKER" && (
@@ -3239,13 +3295,57 @@ export default function MasqueradeProtocol() {
                       <Syringe size={10} /> {me.antivirusCount || 0}/2
                     </div>
                   )}
+                  {me.directive === "SURVIVOR" && (
+                    <div className="absolute -top-2 -right-2 bg-orange-900 text-orange-100 text-[10px] px-2 py-0.5 rounded-full border border-orange-500 font-bold shadow-lg z-10 flex items-center gap-1">
+                      <Skull size={10} /> {gameState.crashCount || 0}/1
+                    </div>
+                  )}
+                  {/* Collector Tracker */}
+                  {me.directive === "COLLECTOR" &&
+                    (() => {
+                      const intelCount = me.hand.filter(
+                        (c) => c === "INTEL",
+                      ).length;
+                      const isClose = intelCount >= 4;
+                      return (
+                        <div
+                          className={`absolute -top-2 -right-2 text-[10px] px-2 py-0.5 rounded-full border font-bold shadow-lg z-10 flex items-center gap-1 transition-all ${
+                            isClose
+                              ? "bg-yellow-500 text-black border-white animate-pulse"
+                              : "bg-cyan-900 text-cyan-100 border-cyan-500"
+                          }`}
+                        >
+                          <Code size={10} /> {intelCount}/5
+                        </div>
+                      );
+                    })()}
+
+                  {/* Corruptor Tracker */}
+                  {me.directive === "CORRUPTOR" &&
+                    (() => {
+                      const virusCount = me.hand.filter(
+                        (c) => c === "VIRUS",
+                      ).length;
+                      const isClose = virusCount >= 3;
+                      return (
+                        <div
+                          className={`absolute -top-2 -right-2 text-[10px] px-2 py-0.5 rounded-full border font-bold shadow-lg z-10 flex items-center gap-1 transition-all ${
+                            isClose
+                              ? "bg-red-500 text-white border-white animate-pulse"
+                              : "bg-fuchsia-900 text-fuchsia-100 border-fuchsia-500"
+                          }`}
+                        >
+                          <Bug size={10} /> {virusCount}/4
+                        </div>
+                      );
+                    })()}
                   {/* ----------------------------- */}
 
                   {React.createElement(DIRECTIVES[me.directive].icon, {
                     size: 32,
                     className: me.revealed
                       ? "text-red-400"
-                      : "text-fuchsia-400",
+                      : DIRECTIVES[me.directive].color,
                   })}
                   <div>
                     <div className="text-xs font-bold text-white uppercase">
@@ -3271,14 +3371,6 @@ export default function MasqueradeProtocol() {
                   </div>
                 )}
               </div>
-
-              {isMyTurn && (
-                <div className="flex items-center gap-4">
-                  <div className="text-xs text-green-400 font-bold animate-pulse">
-                    AWAITING_INPUT...
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Hand */}
@@ -3353,8 +3445,8 @@ export default function MasqueradeProtocol() {
                             px-6 py-2 rounded shadow-lg font-bold flex items-center gap-2 transition-all
                             ${
                               isOverLimit
-                                ? "bg-red-600 hover:bg-red-500 text-white border border-red-400 animate-pulse"
-                                : "bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-500"
+                                ? "bg-red-600/30 hover:bg-red-500 text-white border border-red-400 animate-pulse"
+                                : "bg-slate-700/30 hover:bg-slate-600 text-slate-200 border border-slate-500 animate-pulse"
                             }
                           `}
                         >
