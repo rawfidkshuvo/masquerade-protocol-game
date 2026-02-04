@@ -169,7 +169,7 @@ const DIRECTIVES = {
     id: "ANARCHIST",
     name: "The Anarchist",
     // CHANGED: Requirement increased to "2 Viruses" per victim
-    desc: "Win if at least 2 other living players are CRITICAL (holding 2+ VIRUS cards).",
+    desc: "Win if 1 other player (in 3 players game) or 2 other players (in 4+ players game) are CRITICAL (2+ VIRUS cards).",
     icon: AlertTriangle,
     color: "text-yellow-400",
   },
@@ -177,7 +177,7 @@ const DIRECTIVES = {
     // CHANGED: Lower threshold. In small games, 2 crashes usually ends the game anyway.
     id: "SURVIVOR",
     name: "The Survivor",
-    desc: "Win if you survive 1 System Crash (Global), or be the last player standing.",
+    desc: "Win if you survive 1 Crash (in 3-4 players game) or 2 Crash (in 5-6 players game), or be the last player standing.",
     icon: Shield,
     color: "text-orange-400",
   },
@@ -1533,12 +1533,15 @@ export default function MasqueradeProtocol() {
       } else if (d === "CORRUPTOR") {
         if (h.filter((c) => c === "VIRUS").length >= 4) won = true;
       } else if (d === "ANARCHIST") {
-        // FIXED LOGIC: 2 other players must have 2+ Viruses
+        // SCALING:
+        // 3 Players: Needs 1 other player to be Critical.
+        // 4-6 Players: Needs 2 other players to be Critical.
+        const threshold = otherLivingCount <= 2 ? 1 : 2;
         const criticalPlayers = living.filter(
           (pl) =>
             pl.id !== p.id && pl.hand.filter((c) => c === "VIRUS").length >= 2,
         );
-        if (criticalPlayers.length >= 2) won = true;
+        if (criticalPlayers.length >= threshold) won = true;
       } else if (d === "SABOTEUR") {
         if (
           h.includes("INTEL") &&
@@ -1548,8 +1551,12 @@ export default function MasqueradeProtocol() {
         )
           won = true;
       } else if (d === "SURVIVOR") {
-        // FIXED LOGIC: Use the Calculated Total (Future Sight)
-        if (totalCrashes >= 1) won = true;
+        // SCALING:
+        // 3-4 Players: Must survive 1 System Crash.
+        // 5-6 Players: Must survive 2 System Crashes.
+        // Always wins if they are the Last Man Standing (handled by universal check).
+        const crashThreshold = players.length >= 5 ? 2 : 1;
+        if (totalCrashes >= crashThreshold) won = true;
       } else if (d === "HACKER") {
         if ((p.pingCount || 0) >= 3) won = true;
       } else if (d === "ANTIVIRUS") {
