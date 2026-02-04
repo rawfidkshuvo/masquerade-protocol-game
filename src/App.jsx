@@ -1536,7 +1536,7 @@ export default function MasqueradeProtocol() {
         // SCALING:
         // 3 Players: Needs 1 other player to be Critical.
         // 4-6 Players: Needs 2 other players to be Critical.
-        const threshold = otherLivingCount <= 2 ? 1 : 2;
+        const threshold = players.length <= 3 ? 1 : 2;
         const criticalPlayers = living.filter(
           (pl) =>
             pl.id !== p.id && pl.hand.filter((c) => c === "VIRUS").length >= 2,
