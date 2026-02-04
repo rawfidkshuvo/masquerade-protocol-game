@@ -177,7 +177,7 @@ const DIRECTIVES = {
     // CHANGED: Lower threshold. In small games, 2 crashes usually ends the game anyway.
     id: "SURVIVOR",
     name: "The Survivor",
-    desc: "Win if you survive 1 Crash (in 3-4 players game) or 2 Crash (in 5-6 players game), or be the last player standing.",
+    desc: "Win if you survive 1 Crash or be the last player standing.",
     icon: Shield,
     color: "text-orange-400",
   },
@@ -1551,12 +1551,7 @@ export default function MasqueradeProtocol() {
         )
           won = true;
       } else if (d === "SURVIVOR") {
-        // SCALING:
-        // 3-4 Players: Must survive 1 System Crash.
-        // 5-6 Players: Must survive 2 System Crashes.
-        // Always wins if they are the Last Man Standing (handled by universal check).
-        const crashThreshold = players.length >= 5 ? 2 : 1;
-        if (totalCrashes >= crashThreshold) won = true;
+        if (totalCrashes >= 1) won = true;
       } else if (d === "HACKER") {
         if ((p.pingCount || 0) >= 3) won = true;
       } else if (d === "ANTIVIRUS") {
