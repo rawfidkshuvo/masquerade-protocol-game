@@ -2961,24 +2961,21 @@ export default function MasqueradeProtocol() {
                     if (glitchConfirm && glitchNeedsTarget)
                       activateGlitch(p.id);
                   }}
+                  // CHANGE 1: Added "flex flex-col h-full" here
                   className={`
-                    relative bg-slate-900/80 p-3 rounded border transition-all cursor-default
-                    ${
-                      isActive
-                        ? "border-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.3)]"
-                        : "border-slate-700"
-                    }
-                    ${
-                      isTarget
-                        ? "ring-2 ring-red-500 cursor-pointer animate-pulse bg-red-900/10"
-                        : ""
-                    }
-                    ${
-                      p.isEliminated
-                        ? "opacity-50 grayscale border-red-900"
-                        : ""
-                    }
-                  `}
+            relative bg-slate-900/80 p-3 rounded border transition-all cursor-default flex flex-col h-full
+            ${
+              isActive
+                ? "border-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.3)]"
+                : "border-slate-700"
+            }
+            ${
+              isTarget
+                ? "ring-2 ring-red-500 cursor-pointer animate-pulse bg-red-900/10"
+                : ""
+            }
+            ${p.isEliminated ? "opacity-50 grayscale border-red-900" : ""}
+          `}
                 >
                   {/* PLAYING STATUS BADGE */}
                   {isActive && (
@@ -2986,39 +2983,54 @@ export default function MasqueradeProtocol() {
                       <PlayCircle size={8} /> PLAYING
                     </div>
                   )}
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="font-bold text-xs truncate flex items-center gap-1">
-                      {p.revealed && (
-                        <AlertTriangle size={12} className="text-red-500" />
-                      )}
-                      {p.name}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      {/* Chips Indicator */}
-                      {(p.chips || 0) > 0 && (
+
+                  {/* TOP CONTENT (Name, Chips, Hand) */}
+                  <div>
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="font-bold text-xs truncate flex items-center gap-1">
+                        {p.revealed && (
+                          <AlertTriangle size={12} className="text-red-500" />
+                        )}
+                        {p.name}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        {/* Chips Indicator */}
+                        {(p.chips || 0) > 0 && (
+                          <div
+                            className="flex items-center gap-0.5"
+                            title={`${p.chips} Chips`}
+                          >
+                            {[...Array(p.chips)].map((_, i) => (
+                              <Award
+                                key={i}
+                                size={10}
+                                className="text-yellow-400 fill-yellow-900"
+                              />
+                            ))}
+                          </div>
+                        )}
+                        {p.ready && gameState.status === "finished" && (
+                          <CheckCircle size={14} className="text-green-500" />
+                        )}
+                        {p.isEliminated && (
+                          <Skull size={14} className="text-red-500" />
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-1 justify-center mb-2">
+                      {p.hand.map((_, idx) => (
                         <div
-                          className="flex items-center gap-0.5"
-                          title={`${p.chips} Chips`}
-                        >
-                          {[...Array(p.chips)].map((_, i) => (
-                            <Award
-                              key={i}
-                              size={10}
-                              className="text-yellow-400 fill-yellow-900"
-                            />
-                          ))}
-                        </div>
-                      )}
-                      {p.ready && gameState.status === "finished" && (
-                        <CheckCircle size={14} className="text-green-500" />
-                      )}
-                      {p.isEliminated && (
-                        <Skull size={14} className="text-red-500" />
-                      )}
+                          key={idx}
+                          className="w-2 h-4 bg-slate-700 shadow-md border border-cyan-600"
+                        />
+                      ))}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 mb-2">
+                  {/* BOTTOM CONTENT (Avatar & Directive Boxes) */}
+                  {/* CHANGE 2: Added "mt-auto justify-center" and removed "mb-2" */}
+                  <div className="flex items-center gap-2 mt-auto justify-center">
                     {/* Avatar Display - Click to Inspect */}
                     <div
                       onClick={(e) => {
@@ -3034,11 +3046,11 @@ export default function MasqueradeProtocol() {
                         className: AVATARS[p.avatar].color,
                       })}
                     </div>
+
                     {/* Directive (Hidden/Revealed) - Click to Inspect */}
                     <div
                       onClick={(e) => {
                         e.stopPropagation();
-                        // FIX 1: Allow inspection if revealed OR game is finished
                         if (p.revealed || gameState.status === "finished") {
                           setInspectingItem(DIRECTIVES[p.directive]);
                         } else {
@@ -3046,33 +3058,20 @@ export default function MasqueradeProtocol() {
                         }
                       }}
                       className={`w-8 h-8 rounded flex items-center justify-center border cursor-pointer hover:scale-110 transition-transform ${
-                        // FIX 2: Change border color if revealed OR game is finished
                         p.revealed || gameState.status === "finished"
                           ? "border-red-500 bg-red-900/40 animate-pulse"
                           : "border-slate-700 bg-slate-800"
                       }`}
                     >
-                      {/* FIX 3: Show Icon if revealed OR game is finished */}
                       {p.revealed || gameState.status === "finished" ? (
                         React.createElement(DIRECTIVES[p.directive].icon, {
                           size: 16,
-                          // CHANGE HERE: Use the specific color from data
-                          //className: DIRECTIVES[p.directive].color,
                           className: "text-red-400",
                         })
                       ) : (
                         <Lock size={14} className="text-slate-600" />
                       )}
                     </div>
-                  </div>
-
-                  <div className="flex gap-0.5 justify-center">
-                    {p.hand.map((_, idx) => (
-                      <div
-                        key={idx}
-                        className="w-2 h-4 bg-slate-700 rounded-sm"
-                      />
-                    ))}
                   </div>
                 </div>
               );
